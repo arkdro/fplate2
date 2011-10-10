@@ -3,6 +3,7 @@ module type Item = sig
   val create : t -> t
   val to_string : t -> string
 end
+
 module Plate (Item : Item) : sig
   type a
   val gen : Item.t -> int -> int -> a
@@ -22,4 +23,7 @@ end = struct
   let gen psz w h = gen_matrix Item.create psz w h
   let to_string_row row = Array.map Item.to_string row
   let to_string p = Array.map to_string_row p
+  let rehash plate x y n =
+    (* plate - plate, n - new value, (x;y) - coordinates *)
+    ()
 end
