@@ -1,0 +1,9 @@
+.omake*
+*.omc
+*.cm[iox]
+*.*~
+*.o
+RE:^#
+tags
+TAGS
+*.opt
