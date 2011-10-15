@@ -1,6 +1,6 @@
 module type PointSig = sig
   (* type point *)
-  type t = int (* type exposed for debugging only *)
+  type t (* = int *) (* type exposed for debugging only *)
   val create    : int -> t
   val cmp       : t -> t -> bool
   val to_string : t -> string

@@ -149,6 +149,7 @@ OCAMLCFLAGS   += -g
 
 FILES[] =
 	plate
+	plate_test
 	point2
 	point
 	rinit
