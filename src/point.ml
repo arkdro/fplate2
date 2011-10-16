@@ -6,8 +6,12 @@ module type PointSig = sig
   val to_string : t -> string
 end
 module Point : PointSig = struct
-  type t = int
-  let create limit = Random.int limit
-  let cmp p1 p2 = p1 = p2
-  let to_string = string_of_int
+  type t = { color: int;
+             (* the following fields are used for debugging *)
+             pushed: bool; (* true if pushed in queue for current iteration *)
+             amount: int (* a number of pushes in queue for current iteration *)
+           }
+  let create limit = {color = Random.int limit; pushed = false; amount = 0}
+  let cmp p1 p2 = p1.color = p2.color
+  let to_string point = string_of_int point.color
 end

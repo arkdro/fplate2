@@ -55,10 +55,12 @@ module Fill (Item : Item) = struct
     update_cells row left right new_data
 
     (* plate: plate, n: new item, (x;y): coordinates *)
-  let fill_step plate x y new_data =
+  let fill_step_q plate x y new_data queue =
     let cur_data = plate.(y).(x) in
     let new_cur_row = update_cur_row plate.(y) x cur_data new_data
     in new_cur_row
+  let fill_step plate x y new_item =
+    fill_step_q plate x y new_item []
 end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
@@ -66,7 +68,7 @@ module Plate (Item : Item) : sig
   val gen : int -> int -> int -> a
   val to_string : a -> string
   val to_string_array : a -> string array array
-  val fill_step : a -> int -> int -> Item.t -> unit
+  val fill_step : a -> int -> int -> Item.t -> unit (* exposed for tests only *)
 end = struct
   type a = Item.t array array
   type t = Item.t

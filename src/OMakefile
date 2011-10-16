@@ -25,6 +25,10 @@
 # Phony targets are scoped, so you probably want to declare them first.
 #
 
+if $(not $(defined-env VERBOSE))
+	OMakeFlags(--no--progress)
+	export
+
 .PHONY: clean distclean
 
 ########################################################################
@@ -117,7 +121,7 @@
 # Various options
 #
 # OCAMLFLAGS    +=
-OCAMLCFLAGS   += -g
+OCAMLCFLAGS   += -g -wA
 # OCAMLOPTFLAGS +=
 # OCAML_LINK_FLAGS +=
 # OCAML_BYTE_LINK_FLAGS +=
