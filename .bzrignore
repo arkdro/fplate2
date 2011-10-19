@@ -1,3 +1,4 @@
+log/
 .omake*
 *.omc
 *.cm[iox]

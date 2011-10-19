@@ -29,7 +29,7 @@ if $(not $(defined-env VERBOSE))
 	OMakeFlags(--no--progress)
 	export
 
-.PHONY: clean distclean
+.PHONY: clean distclean tags
 
 ########################################################################
 # Subdirectories.
@@ -174,3 +174,6 @@ clean:
 
 distclean: clean
 	rm -f *.?~ *.??~ *.???~
+
+tags:
+	etags -R .

@@ -4,6 +4,9 @@ module type Item = sig
   val create : int -> t
   val to_string : t -> string
   val cmp : t -> t -> bool
+  val add_push  : t -> t
+  val add_amount: t -> t
+  val clean : t -> t
 end
 (* ---------------------------------------------------------------------- *)
 module Fill (Item : Item) = struct
@@ -49,18 +52,74 @@ module Fill (Item : Item) = struct
         row.(left) <- new_data;
         update_cells row (left+1) right new_data
       end
-  let update_cur_row row i cur_data new_data =
-    let left = find_leftmost row i cur_data in
-    let right = find_rightmost row i cur_data in
-    update_cells row left right new_data
+  let rec clean_row2 row = function
+    | -1 -> ()
+    | x ->
+      row.(x) <- Item.clean row.(x);
+      clean_row2 row (x-1)
+  let clean_row row =
+    clean_row2 row ((Array.length row)-1)
+  let clean_plate plate =
+    Array.iter clean_row plate
+  let even y = (y mod 2) = 0
+  let check_cur_cell x y cell new_data =
+      if Item.cmp new_data cell then
+        [(x,y)]
+      else
+        []
+  let check_prev_cell row x y new_data =
+    match prev_cell row x with
+      | Cell c when Item.cmp new_data c ->
+        [(x-1, y)]
+      | _ ->
+        []
+  let check_next_cell row x y new_data =
+    match next_cell row x with
+      | Cell c when Item.cmp new_data c ->
+        [(x+1, y)]
+      | _ ->
+        []
+  let rec check_row_to_queue2 row left right y new_data acc =
+    if left > right then
+      acc
+    else
+      let cur_add = check_cur_cell left y row.(left) new_data in
+      let adj_add =
+        if even y then
+          check_prev_cell row left y new_data
+        else
+          check_next_cell row left y new_data
+      in
+      check_row_to_queue2 row (left+1) right y new_data (cur_add @ adj_add @ acc)
 
-    (* plate: plate, n: new item, (x;y): coordinates *)
-  let fill_step_q plate x y new_data queue =
-    let cur_data = plate.(y).(x) in
-    let new_cur_row = update_cur_row plate.(y) x cur_data new_data
-    in new_cur_row
+  let check_row_to_queue row left right y new_data =
+    match row with
+      | Norow -> []
+      | Row a ->
+        check_row_to_queue2 a left right y new_data []
+  let find_cells_to_queue plate left right y new_data =
+    let prev_row = prev_row plate y in
+    let prev_cells = check_row_to_queue prev_row left right y new_data in
+    let next_row = next_row plate y in
+    let next_cells = check_row_to_queue next_row left right y new_data in
+    prev_cells @ next_cells
+  let fill_step_q plate x y new_data =
+    let row = plate.(y) in
+    let cur_data = row.(x) in
+    let left = find_leftmost row x cur_data in
+    let right = find_rightmost row x cur_data in
+    update_cells row left right new_data;
+    find_cells_to_queue plate left right y new_data
+  let rec fill_step_loop plate new_item = function
+    | [] -> []
+    | (x, y) :: t ->
+      let add = fill_step_q plate x y new_item in
+      fill_step_loop plate new_item (add @ t)
+  (* plate: plate, n: new item, (x;y): coordinates *)
   let fill_step plate x y new_item =
-    fill_step_q plate x y new_item []
+    clean_plate plate;
+    let _ = fill_step_loop plate new_item [(x,y)] in
+    ()
 end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
