@@ -116,12 +116,14 @@ if $(not $(defined-env VERBOSE))
 #
 # NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 # BYTE_ENABLED = $(not $(OCAMLOPT_EXISTS))
+BYTE_ENABLED = true
+NATIVE_ENABLED = false
 
 #
 # Various options
 #
 # OCAMLFLAGS    +=
-OCAMLCFLAGS   += -g -wA
+OCAMLCFLAGS   += -g
 # OCAMLOPTFLAGS +=
 # OCAML_LINK_FLAGS +=
 # OCAML_BYTE_LINK_FLAGS +=
@@ -170,7 +172,7 @@ OCamlProgram ($(PROGRAM), $(FILES))
 .DEFAULT: $(PROGRAM)
 
 clean:
-	rm -f *.o *.cm[iox] $(PROGRAM).opt $(PROGRAM)
+	rm -f *.o *.cm[iox] $(PROGRAM).run $(PROGRAM).opt $(PROGRAM)
 
 distclean: clean
 	rm -f *.?~ *.??~ *.???~

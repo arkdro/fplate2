@@ -25,8 +25,7 @@ end = struct
       Printf.printf "%s\n" (P1.to_string data);
       let start_x = Random.int w in
       Printf.printf "loop w=%d, x=%d\n" w start_x;
-      loop2 data psz (w*psz) start_x;
-      Printf.printf "loop end data:\n%s\n" (P1.to_string data)
+      loop2 data psz (w*psz) start_x
   end
 (* ---------------------------------------------------------------------- *)
   let main =
@@ -34,7 +33,10 @@ end = struct
     let width = 30 in
     let height = 3 in
     (* let _ = Rinit.r_init in *)
+    Printf.printf "main: %d, %d, %d\n" width height point_size;
     let data = P1.gen point_size width height in
-    Loop_test.loop data point_size width height
+    Printf.printf "begin data:\n%s\n" (P1.to_string data);
+    Loop_test.loop data point_size width height;
+    Printf.printf "main end, data:\n%s\n" (P1.to_string data)
 end
 (* ---------------------------------------------------------------------- *)

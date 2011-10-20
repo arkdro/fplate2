@@ -8,4 +8,5 @@ RE:^#
 tags
 TAGS
 *.opt
+*.run
 rpl
