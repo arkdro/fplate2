@@ -17,7 +17,7 @@ end = struct
       match cnt with
         | 0 -> ()
         | _ -> P1.fill_step data x 0 point;
-          Printf.printf "%s\n" (P1.to_string data);
+          Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
           loop2 data psz (cnt-1) x
 
     let loop data psz w h =
@@ -29,9 +29,9 @@ end = struct
   end
 (* ---------------------------------------------------------------------- *)
   let main =
-    let point_size = 5 in
+    let point_size = 10 in
     let width = 30 in
-    let height = 3 in
+    let height = 30 in
     (* let _ = Rinit.r_init in *)
     Printf.printf "main: %d, %d, %d\n" width height point_size;
     let data = P1.gen point_size width height in

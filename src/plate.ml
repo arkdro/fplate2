@@ -12,7 +12,17 @@ end
 module Fill (Item : Item) = struct
   type 'a row = Norow | Row of 'a
   type 'a cell = Nocell | Cell of 'a
+
+  let to_string_row row = Array.map Item.to_string row
+  let to_string_array p = Array.map to_string_row p
+  (* let str_row row = Array.map (fun x -> (Item.to_string x) ^ ";") row *)
+  let row_to_string row =
+    let a1 = to_string_row row in
+    let lst = Array.to_list a1 in
+    String.concat ";" lst
+  let print_row row = Printf.printf "%s\n" (row_to_string row)
   let print_coord (x, y) = Printf.printf "(%d, %d)" x y
+
   let prev_row plate y =
     if y = 0 then
       Norow
@@ -63,74 +73,91 @@ module Fill (Item : Item) = struct
   let clean_plate plate =
     Array.iter clean_row plate
   let even y = (y mod 2) = 0
-  let check_cur_cell x y cell new_data =
-      if Item.cmp new_data cell then
+  let check_cur_cell x y cell target =
+      if Item.cmp target cell then
         [(x,y)]
       else
         []
-  let check_prev_cell row x y new_data =
+  let check_prev_cell row x y target =
     match prev_cell row x with
-      | Cell c when Item.cmp new_data c ->
+      | Cell c when Item.cmp target c ->
         [(x-1, y)]
       | _ ->
         []
-  let check_next_cell row x y new_data =
+  let check_next_cell row x y target =
     match next_cell row x with
-      | Cell c when Item.cmp new_data c ->
+      | Cell c when Item.cmp target c ->
         [(x+1, y)]
       | _ ->
         []
-  let rec check_row_to_queue2 row r_y left right y new_data acc =
+  let rec check_row_to_queue2 row orig_y left right y target acc =
     if left > right then
       acc
     else
-      let cur_add = check_cur_cell left r_y row.(left) new_data in
+      let cur_add = check_cur_cell left orig_y row.(left) target in
       let adj_add =
         if even y then
-          check_prev_cell row left r_y new_data
+          check_prev_cell row left orig_y target
         else
-          check_next_cell row left r_y new_data
+          check_next_cell row left orig_y target
       in
-      check_row_to_queue2 row r_y (left+1) right y new_data (cur_add @ adj_add @ acc)
+      check_row_to_queue2 row orig_y (left+1) right y target (cur_add @ adj_add @ acc)
 
-  let check_row_to_queue row r_y left right y new_data =
+  let check_row_to_queue row r_y left right y target =
     match row with
       | Norow -> []
       | Row a ->
-        check_row_to_queue2 a r_y left right y new_data []
-  let find_cells_to_queue plate left right y new_data =
+        check_row_to_queue2 a r_y left right y target []
+  let find_cells_to_queue plate target left right y =
     let prev_row = prev_row plate y in
-    let prev_cells = check_row_to_queue prev_row (y-1) left right y new_data in
+    let prev_cells = check_row_to_queue prev_row (y-1) left right y target in
     Printf.printf "prev_cells: ";
     List.iter print_coord prev_cells;
     Printf.printf "\n";
     let next_row = next_row plate y in
-    let next_cells = check_row_to_queue next_row (y+1) left right y new_data in
+    let next_cells = check_row_to_queue next_row (y+1) left right y target in
     Printf.printf "next_cells: ";
     List.iter print_coord next_cells;
     Printf.printf "\n";
     prev_cells @ next_cells
-  let fill_step_q plate x y new_data =
-    let row = plate.(y) in
-    let cur_data = row.(x) in
-    let left = find_leftmost row x cur_data in
-    let right = find_rightmost row x cur_data in
-    update_cells row left right new_data;
-    plate.(y) <- row;
-    find_cells_to_queue plate left right y new_data
-  let rec fill_step_loop plate new_item = function
+  let fill_step_q plate target x y new_data =
+    if Item.cmp plate.(y).(x) target then
+      let row = plate.(y) in
+      let left = find_leftmost row x target in
+      let right = find_rightmost row x target in
+      Printf.printf "fill_step_q: left=%d, right=%d\n" left right;
+      Printf.printf "fill_step_q: row before update\n";
+      print_row row;
+      update_cells row left right new_data;
+      Printf.printf "fill_step_q: row after update\n";
+      print_row row;
+      plate.(y) <- row;
+      find_cells_to_queue plate target left right y
+    else
+      (
+        Printf.printf "fill_step_q: x:y != target\n";
+        []
+      )
+  let rec fill_step_loop plate target new_item = function
     | [] -> []
     | (x, y) :: t ->
       Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
-      let add = fill_step_q plate x y new_item in
-      fill_step_loop plate new_item (t @ add)
+      let add = fill_step_q plate target x y new_item in
+      Printf.printf "fill_step_loop add:\n";
+      List.iter print_coord add;
+      Printf.printf "\n";
+      fill_step_loop plate target new_item (t @ add)
   (* plate: plate, n: new item, (x;y): coordinates *)
   let fill_step plate x y new_item =
-    Printf.printf "fill_step: %d, %d, %s\n" x y (Item.to_string new_item);
+    Printf.printf "fill_step: x=%d, y=%d, new=%s\n" x y (Item.to_string new_item);
     clean_plate plate;
-    Printf.printf "fill_step 2\n";
-    let _ = fill_step_loop plate new_item [(x,y)] in
-    ()
+    Printf.printf "fill_step cleaned\n";
+    let target = plate.(y).(x) in
+    if Item.cmp new_item target then
+      Printf.printf "fill_step target = replacement, exiting\n"
+    else
+      let _ = fill_step_loop plate target new_item [(x,y)] in
+      ()
 end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
