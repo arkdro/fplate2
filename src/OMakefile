@@ -123,7 +123,7 @@ NATIVE_ENABLED = false
 # Various options
 #
 # OCAMLFLAGS    +=
-OCAMLCFLAGS   += -g
+#OCAMLCFLAGS   += -g
 # OCAMLOPTFLAGS +=
 # OCAML_LINK_FLAGS +=
 # OCAML_BYTE_LINK_FLAGS +=
