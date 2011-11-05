@@ -1,0 +1,37 @@
+.record [
+	.name plate
+	.field [
+		.name width
+		.type int
+	]
+	.field [
+		.name height
+		.type int
+	]
+	.field [
+		.name psize
+		.type int % TODO: make it polymorphic
+	]
+	.field [
+		.name rows % rows
+		.type row
+		.repeated
+	]
+]
+
+.record [
+	.name row
+	.field [
+		.name pt % points
+		.type point
+		.repeated
+	]
+]
+
+.record [
+	.name point
+	.field [
+		.name v
+		.type int
+	]
+]

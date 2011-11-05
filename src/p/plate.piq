@@ -1,0 +1,16 @@
+:plate/plate [
+	.width 10
+	.height 3
+	.psize 8
+	.rows [
+		.pt [ .v 1 ]
+		.pt [ .v 6 ]
+		.pt [ .v 0 ]
+	]
+	.rows [
+		.pt [ .v 2 ]
+		.pt [ .v 3 ]
+		.pt [ .v 1 ]
+	]
+]
+

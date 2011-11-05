@@ -1,7 +1,7 @@
 log/
 .omake*
 *.omc
-*.cm[iox]
+*.cm[aiox]
 *.*~
 *.o
 RE:^#
@@ -10,3 +10,5 @@ TAGS
 *.opt
 *.run
 rpl
+src/p/plate_piqi.ml
+src/p/plate_piqi_ext.ml
