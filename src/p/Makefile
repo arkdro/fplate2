@@ -21,8 +21,10 @@ ML_FILES = \
 OBJ_FILES = $(patsubst %.ml, %.cmo, $(ML_FILES))
 CMI_FILES = $(patsubst %.ml, %.cmi, $(ML_FILES))
 
-all: $(OBJ_FILES)
+$(PROG): $(OBJ_FILES)
 	$(OC) -I $(PIQI_LIB_PATH) $(PIQI_LIB) -a -o $(PROG) $(OBJ_FILES)
+
+all: $(PROG)
 
 $(PIQI_ML_FILES): $(PIQI_FILES)
 	set -e; \

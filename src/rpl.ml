@@ -5,7 +5,7 @@ open Plate
 module P1 = Plate (Point)
 (* module P2 = Plate (Point2) *)
 
-let main =
+let main () =
 	let point_size = 8 in
 	let width = 3 in
 	let height = 3 in
@@ -13,3 +13,5 @@ let main =
 	let res = P1.gen point_size width height in
 	(* let res = P2.gen point_size width height in *)
  	P1.to_string res 
+
+let _ = main ()

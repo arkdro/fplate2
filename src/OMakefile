@@ -87,11 +87,12 @@ if $(not $(defined-env VERBOSE))
 
 # add path for OCAMLFIND
 if $(defined-env OCAMLPATH)
-	OCAMLPATH += $(HOME)/util/ocaml/dist
+	OCAMLPATH = $(HOME)/util/ocaml/dist:$(OCAMLPATH)
 	export
 else
 	OCAMLPATH = $(HOME)/util/ocaml/dist
 	export
+#eprintln(new OCAMLPATH=-=$(OCAMLPATH)=-)
 setenv(OCAMLPATH, $(OCAMLPATH))
 
 ################################################
