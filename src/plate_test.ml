@@ -4,7 +4,7 @@ open Point
 open Plate
 module P1 = Plate (Point)
 module Plate_test : sig
-  val main : unit
+  val main : int -> int -> int -> unit
 end = struct
 (* ---------------------------------------------------------------------- *)
   module Loop_test : sig
@@ -28,10 +28,7 @@ end = struct
       loop2 data psz (w*psz) start_x
   end
 (* ---------------------------------------------------------------------- *)
-  let main =
-    let point_size = 10 in
-    let width = 30 in
-    let height = 30 in
+  let main width height point_size =
     (* let _ = Rinit.r_init in *)
     Printf.printf "main: %d, %d, %d\n" width height point_size;
     let data = P1.gen point_size width height in
