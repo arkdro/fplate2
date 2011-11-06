@@ -210,7 +210,14 @@ end = struct
     (String.concat "\n" lst) ^ "\n"
   module F1 = Fill(Item)
   let fill_step plate x y n = F1.fill_step plate x y n
-  let fill_step_count plate x y = F1.fill_step_count plate x y
+  let deep_copy plate =
+    let deep_copy_row row = Array.copy row in
+    let new_plate = Array.copy plate in
+    Array.map deep_copy_row new_plate
+
+  let fill_step_count plate x y =
+    let temp_plate = deep_copy plate in
+    F1.fill_step_count temp_plate x y
 
   (* counts available items starting from x,y *)
   let stat plate x y =
