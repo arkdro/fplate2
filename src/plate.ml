@@ -2,6 +2,7 @@
 module type Item = sig
   type t
   val create : int -> t
+  val create_uniq : t
   val to_string : t -> string
   val cmp : t -> t -> bool
   val add_push  : t -> t
@@ -55,13 +56,13 @@ module Fill (Item : Item) = struct
         find_rightmost row (i+1) data
       | _ ->
         i
-  let rec update_cells row left right new_data =
+  let rec update_cells row left right new_data cnt =
     if left > right then
-      ()
+      cnt
     else
       begin
         row.(left) <- new_data;
-        update_cells row (left+1) right new_data
+        update_cells row (left+1) right new_data (cnt+1)
       end
   let rec clean_row2 row = function
     | -1 -> ()
@@ -111,42 +112,45 @@ module Fill (Item : Item) = struct
   let find_cells_to_queue plate target left right y =
     let prev_row = prev_row plate y in
     let prev_cells = check_row_to_queue prev_row (y-1) left right y target in
-    Printf.printf "prev_cells: ";
+    Printf.printf "queued prev_cells: ";
     List.iter print_coord prev_cells;
     Printf.printf "\n";
     let next_row = next_row plate y in
     let next_cells = check_row_to_queue next_row (y+1) left right y target in
-    Printf.printf "next_cells: ";
+    Printf.printf "queued next_cells: ";
     List.iter print_coord next_cells;
     Printf.printf "\n";
     prev_cells @ next_cells
-  let fill_step_q plate target x y new_data =
+  (* cnt: counter of matching items for current iteration *)
+  let fill_step_row plate target x y new_data =
     if Item.cmp plate.(y).(x) target then
       let row = plate.(y) in
       let left = find_leftmost row x target in
       let right = find_rightmost row x target in
-      Printf.printf "fill_step_q: left=%d, right=%d\n" left right;
-      Printf.printf "fill_step_q: row before update\n";
+      Printf.printf "fill_step_row: left=%d, right=%d\n" left right;
+      Printf.printf "fill_step_row: row before update\n";
       print_row row;
-      update_cells row left right new_data;
-      Printf.printf "fill_step_q: row after update\n";
+      let add_cnt = update_cells row left right new_data 0 in
+      Printf.printf "fill_step_row: row after update, add=%d\n" add_cnt;
       print_row row;
       plate.(y) <- row;
-      find_cells_to_queue plate target left right y
+      let list = find_cells_to_queue plate target left right y in
+      list, add_cnt
     else
       (
-        Printf.printf "fill_step_q: x:y != target\n";
-        []
+        Printf.printf "fill_step_row: x:y != target\n";
+        [], 0
       )
-  let rec fill_step_loop plate target new_item = function
-    | [] -> []
+  (* cnt: counter of matching items for current iteration *)
+  let rec fill_step_loop plate target new_item cnt = function
+    | [] -> [], cnt
     | (x, y) :: t ->
       Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
-      let add = fill_step_q plate target x y new_item in
-      Printf.printf "fill_step_loop add:\n";
+      let (add, add_cnt) = fill_step_row plate target x y new_item in
+      Printf.printf "fill_step_loop add_cnt=%d, added list:\n" add_cnt;
       List.iter print_coord add;
       Printf.printf "\n";
-      fill_step_loop plate target new_item (t @ add)
+      fill_step_loop plate target new_item (cnt + add_cnt) (t @ add)
   (* plate: plate, n: new item, (x;y): coordinates *)
   let fill_step plate x y new_item =
     Printf.printf "fill_step: x=%d, y=%d, new=%s\n" x y (Item.to_string new_item);
@@ -154,10 +158,19 @@ module Fill (Item : Item) = struct
     Printf.printf "fill_step cleaned\n";
     let target = plate.(y).(x) in
     if Item.cmp new_item target then
-      Printf.printf "fill_step target = replacement, exiting\n"
+      (
+        Printf.printf "fill_step target = replacement, exiting\n";
+        0
+      )
     else
-      let _ = fill_step_loop plate target new_item [(x,y)] in
-      ()
+      let _, cnt = fill_step_loop plate target new_item 0 [(x,y)] in
+      Printf.printf "fill_step result cnt=%d\n" cnt;
+      cnt
+  let fill_step_count plate x y =
+    let new_plate = plate in            (* need DEEP copy !!! *)
+    let new_item = Item.create_uniq in
+    let res = fill_step new_plate x y new_item in
+    res
 end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
@@ -165,7 +178,9 @@ module Plate (Item : Item) : sig
   val gen : int -> int -> int -> a
   val to_string : a -> string
   val to_string_array : a -> string array array
-  val fill_step : a -> int -> int -> Item.t -> unit (* exposed for tests only *)
+  val fill_step : a -> int -> int -> Item.t -> int (* exposed for tests only *)
+  val fill_step_count : a -> int -> int -> int (* exposed for tests only *)
+  val stat : a -> int -> int -> int
 end = struct
   type a = Item.t array array
   type t = Item.t
@@ -195,6 +210,10 @@ end = struct
     (String.concat "\n" lst) ^ "\n"
   module F1 = Fill(Item)
   let fill_step plate x y n = F1.fill_step plate x y n
+  let fill_step_count plate x y = F1.fill_step_count plate x y
 
+  (* counts available items starting from x,y *)
+  let stat plate x y =
+    0
 end
 (* ---------------------------------------------------------------------- *)

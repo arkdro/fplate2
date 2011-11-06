@@ -2,6 +2,7 @@ module type PointSig = sig
   (* type point *)
   type t (* = int *) (* type exposed for debugging only *)
   val create    : int -> t
+  val create_uniq : t
   val cmp       : t -> t -> bool
   val to_string : t -> string
   val add_push  : t -> t
@@ -20,4 +21,5 @@ module Point : PointSig = struct
   let clean p = {p with pushed=false; amount=0}
   let add_push p = {p with pushed=true}
   let add_amount p = {p with amount = p.amount+1}
+  let create_uniq = {color = -1; pushed = false; amount = 0}
 end
