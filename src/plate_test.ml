@@ -20,7 +20,7 @@ end = struct
           | _ ->
             let _ = P1.fill_step data x 0 point in
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
-            let stat_cnt = P1.fill_step_count data x 0 in
+            let stat_cnt = P1.stat data x 0 in
             Printf.printf "cur plate stat: %d\n" stat_cnt;
             Printf.printf "cur plate after fill_step_count:\n%s\n"
               (P1.to_string data);

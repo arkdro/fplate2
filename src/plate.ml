@@ -179,7 +179,6 @@ module Plate (Item : Item) : sig
   val to_string : a -> string
   val to_string_array : a -> string array array
   val fill_step : a -> int -> int -> Item.t -> int (* exposed for tests only *)
-  val fill_step_count : a -> int -> int -> int (* exposed for tests only *)
   val stat : a -> int -> int -> int
 end = struct
   type a = Item.t array array
@@ -215,12 +214,10 @@ end = struct
     let new_plate = Array.copy plate in
     Array.map deep_copy_row new_plate
 
-  let fill_step_count plate x y =
+  (* counts available items starting from x,y *)
+  let stat plate x y =
     let temp_plate = deep_copy plate in
     F1.fill_step_count temp_plate x y
 
-  (* counts available items starting from x,y *)
-  let stat plate x y =
-    0
 end
 (* ---------------------------------------------------------------------- *)
