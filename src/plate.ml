@@ -6,8 +6,15 @@ module type Item = sig
   val to_string : t -> string
   val cmp : t -> t -> bool
   val add_push  : t -> t
-  val add_amount: t -> t
+  val add_iter: t -> t
   val clean : t -> t
+
+  type c_cnt
+  type c_key
+  val c_empty : c_cnt
+  val c_set   : c_key -> int -> c_cnt -> c_cnt
+  val c_inc_n : c_key -> int -> c_cnt -> c_cnt
+  val c_inc   : c_key -> c_cnt -> c_cnt
 end
 (* ---------------------------------------------------------------------- *)
 module Fill (Item : Item) = struct
@@ -142,32 +149,38 @@ module Fill (Item : Item) = struct
         [], 0
       )
   (* cnt: counter of matching items for current iteration *)
-  let rec fill_step_loop plate target new_item cnt = function
-    | [] -> [], cnt
+  let rec fill_step_loop plate target new_item ((iter, cnt, c_stat) as stat) = function
+    | [] -> [], stat
     | (x, y) :: t ->
       Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
       let (add, add_cnt) = fill_step_row plate target x y new_item in
       Printf.printf "fill_step_loop add_cnt=%d, added list:\n" add_cnt;
       List.iter print_coord add;
       Printf.printf "\n";
-      fill_step_loop plate target new_item (cnt + add_cnt) (t @ add)
+      let new_stat = (iter + 1, cnt + add_cnt, c_stat) in
+      fill_step_loop plate target new_item new_stat (t @ add)
   (* plate: plate, n: new item, (x;y): coordinates *)
   let fill_step plate x y new_item =
     Printf.printf "fill_step: x=%d, y=%d, new=%s\n" x y (Item.to_string new_item);
-    clean_plate plate;
+    let cur_iter = 0 in
+    let cur_cnt = 0 in
+    let stat = (cur_iter, cur_cnt, Item.c_empty) in
     Printf.printf "fill_step cleaned\n";
     let target = plate.(y).(x) in
     if Item.cmp new_item target then
       (
         Printf.printf "fill_step target = replacement, exiting\n";
-        0
+        stat
       )
     else
-      let _, cnt = fill_step_loop plate target new_item 0 [(x,y)] in
-      Printf.printf "fill_step result cnt=%d\n" cnt;
-      cnt
+      let _, res_all_stat = fill_step_loop plate target new_item stat [(x,y)] in
+      let (res_iter, res_cnt, res_stat) = res_all_stat in
+      Printf.printf "fill_step result iter=%d, cnt=%d\n" res_iter res_cnt;
+      res_all_stat
+
+  (* needs DEEP copy to operate on !!! *)
   let fill_step_count plate x y =
-    let new_plate = plate in            (* need DEEP copy !!! *)
+    let new_plate = plate in
     let new_item = Item.create_uniq in
     let res = fill_step new_plate x y new_item in
     res
@@ -178,8 +191,9 @@ module Plate (Item : Item) : sig
   val gen : int -> int -> int -> a
   val to_string : a -> string
   val to_string_array : a -> string array array
-  val fill_step : a -> int -> int -> Item.t -> int (* exposed for tests only *)
-  val stat : a -> int -> int -> int
+ (* exposed for tests only *)
+  val fill_step : a -> int -> int -> Item.t -> int * int * Item.c_cnt
+  val stat : a -> int -> int -> int * int * Item.c_cnt
 end = struct
   type a = Item.t array array
   type t = Item.t
@@ -214,7 +228,7 @@ end = struct
     let new_plate = Array.copy plate in
     Array.map deep_copy_row new_plate
 
-  (* counts available items starting from x,y *)
+  (* counts items of the same color starting from x,y *)
   let stat plate x y =
     let temp_plate = deep_copy plate in
     F1.fill_step_count temp_plate x y
