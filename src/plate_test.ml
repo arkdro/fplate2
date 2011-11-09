@@ -22,7 +22,8 @@ end = struct
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
             let stat = P1.stat data x 0 in
             let (res_iter, res_cnt, res_stat) = stat in
-            Printf.printf "cur plate stat: %d\n" res_cnt;
+            Printf.printf "cur plate res_cnt: %d\n" res_cnt;
+            Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
             Printf.printf "cur plate after fill_step_count:\n%s\n"
               (P1.to_string data);
             (

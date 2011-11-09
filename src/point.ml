@@ -15,6 +15,7 @@ module type PointSig = sig
   val c_set   : c_key -> int -> c_cnt -> c_cnt
   val c_inc_n : c_key -> int -> c_cnt -> c_cnt
   val c_inc   : c_key -> c_cnt -> c_cnt
+  val c_to_string : c_cnt -> string
 end
 module rec Point : PointSig = struct
   type t = { color: int;
@@ -22,6 +23,13 @@ module rec Point : PointSig = struct
              pushed: bool; (* true if pushed in queue for current iteration *)
              iter: int (* last involved iteration *)
            }
+  let create limit = {color = Random.int limit; pushed = false; iter = -1}
+  let cmp p1 p2 = p1.color = p2.color
+  let to_string point = string_of_int point.color
+  let clean p = {p with pushed=false; iter = -1}
+  let add_push p = {p with pushed=true}
+  let add_iter p = {p with iter = p.iter+1}
+  let create_uniq = {color = -1; pushed = false; iter = -1}
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* this part must be a separate functor *)
   (* work with map: color -> amount *)
@@ -48,13 +56,13 @@ module rec Point : PointSig = struct
       | false ->
         Cnt.add point increment map
   let c_inc point map = c_inc_n point 1 map
+  let c_to_string map =
+    let item_to_string (k, v) =
+      to_string k ^ ": " ^ string_of_int v
+    in
+    let lst = Cnt.bindings map in
+    let str_list = List.map item_to_string lst in
+    String.concat "\n" str_list
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
 
-  let create limit = {color = Random.int limit; pushed = false; iter = 0}
-  let cmp p1 p2 = p1.color = p2.color
-  let to_string point = string_of_int point.color
-  let clean p = {p with pushed=false; iter=0}
-  let add_push p = {p with pushed=true}
-  let add_iter p = {p with iter = p.iter+1}
-  let create_uniq = {color = -1; pushed = false; iter = 0}
 end
