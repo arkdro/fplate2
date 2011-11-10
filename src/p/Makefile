@@ -52,4 +52,7 @@ clean:
 distclean: clean
 	rm -f -- $(PIQI_ML_FILES) $(PIQI_ML_EXT_FILES)
 
-.PHONY: clean distclean mli
+tags:
+	etags -R .
+
+.PHONY: clean distclean mli tags

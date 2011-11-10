@@ -6,11 +6,12 @@ module type PointSig = sig
   val cmp       : t -> t -> bool
   val to_string : t -> string
   val add_push  : t -> t
+  val set_iter: t -> int -> t
   val add_iter: t -> t
   val clean     : t -> t
 
   type c_cnt
-  type c_key
+  type c_key = t
   val c_empty : c_cnt
   val c_set   : c_key -> int -> c_cnt -> c_cnt
   val c_inc_n : c_key -> int -> c_cnt -> c_cnt
@@ -28,6 +29,7 @@ module rec Point : PointSig = struct
   let to_string point = string_of_int point.color
   let clean p = {p with pushed=false; iter = -1}
   let add_push p = {p with pushed=true}
+  let set_iter p iter = {p with iter = iter}
   let add_iter p = {p with iter = p.iter+1}
   let create_uniq = {color = -1; pushed = false; iter = -1}
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
@@ -44,7 +46,7 @@ module rec Point : PointSig = struct
 
   module Cnt = Map.Make (Cmp)
 
-  type c_key = Cmp.t
+  type c_key = t
   type c_cnt = int Cnt.t
   let c_empty = Cnt.empty
   let c_set point count map = Cnt.add point count map

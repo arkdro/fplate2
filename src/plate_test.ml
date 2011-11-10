@@ -8,7 +8,7 @@ module Plate_test : sig
 end = struct
 (* ---------------------------------------------------------------------- *)
   module Loop_test : sig
-    val loop : P1.a -> int -> int -> int -> unit
+    val loop : P1.p -> int -> int -> int -> unit
   end = struct
     let loop data psz w h =
       let rec loop2 data psz cnt x =
@@ -21,7 +21,7 @@ end = struct
             let _ = P1.fill_step data x 0 point in
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
             let stat = P1.stat data x 0 in
-            let (res_iter, res_cnt, res_stat) = stat in
+            let (res_cnt, res_stat) = stat in
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
             Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
             Printf.printf "cur plate after fill_step_count:\n%s\n"
