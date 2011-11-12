@@ -32,6 +32,8 @@ module Fill (Item : Item) = struct
     String.concat ";" lst
   let print_row row = Printf.printf "%s\n" (row_to_string row)
   let print_coord (x, y) = Printf.printf "(%d, %d)" x y
+  let print_stat c =
+    Printf.printf "c_stat:\n%s\n" (Item.c_to_string c)
 
   let prev_row plate y =
     if y = 0 then
@@ -67,7 +69,7 @@ module Fill (Item : Item) = struct
         i
 
   (* add edges to stat, put iter counter to edges *)
-  let mark_edges iter row left right (cnt, c_stat) =
+  let mark_edges iter row left right c_stat =
     let c_stat_left =(
       match prev_cell row left with
         | Nocell ->
@@ -82,64 +84,83 @@ module Fill (Item : Item) = struct
         | Cell cell ->
           Item.c_inc cell c_stat_left)
     in
-    (cnt, c_stat_right)
+    c_stat_right
 
-  (* update cells in row: from N left to N right *)
-  let rec update_cells iter row left right new_data ((cnt, c_stat) as stat) =
-    if left > right then
-      mark_edges iter row left right stat
-    else
-      begin
-        row.(left) <- new_data;
-        let new_c_stat = Item.c_inc new_data c_stat in
-        update_cells iter row (left+1) right new_data (cnt + 1, new_c_stat)
-      end
+  (* update cells in row in place: from left to right *)
+  let update_cells iter row left right new_data (cnt, c_stat) =
+    let rec aux_update_cells iter row left right idx new_data (cnt, c_stat) =
+      if idx > right then (
+        let new_c_stat = mark_edges iter row left right c_stat in
+        Printf.printf "update_cells done, left=%d, right=%d, idx=%d, cnt=%d\n"
+          left right idx cnt;
+        print_row row;
+        print_stat new_c_stat;
+        (cnt, new_c_stat)
+      ) else (
+        row.(idx) <- new_data;
+        let new_c_stat = c_stat in
+        Printf.printf "update_cells:\n";
+        print_row row;
+        print_stat new_c_stat;
+        aux_update_cells iter row left right (idx+1) new_data (cnt+1, new_c_stat)
+      )
+    in
+    aux_update_cells iter row left right left new_data (cnt, c_stat)
 
-  let rec clean_row2 row = function
-    | -1 -> ()
-    | x ->
-      row.(x) <- Item.clean row.(x);
-      clean_row2 row (x-1)
-  let clean_row row =
-    clean_row2 row ((Array.length row)-1)
+
   let clean_plate plate =
+    let clean_row row =
+      let rec aux_clean_row row = function
+        | -1 -> ()
+        | x ->
+          row.(x) <- Item.clean row.(x);
+          aux_clean_row row (x-1)
+      in
+      aux_clean_row row ((Array.length row)-1)
+    in
     Array.iter clean_row plate
-  let even y = (y mod 2) = 0
-  let check_cur_cell x y cell target =
+
+  (* if node color to north/south of n is target color, add node to queue *)
+  let check_row_to_queue row r_y left right y target =
+    let even y = (y mod 2) = 0
+    in
+    let check_cur_cell x y cell target =
       if Item.cmp target cell then
         [(x,y)]
       else
         []
-  let check_prev_cell row x y target =
-    match prev_cell row x with
-      | Cell c when Item.cmp target c ->
-        [(x-1, y)]
-      | _ ->
-        []
-  let check_next_cell row x y target =
-    match next_cell row x with
-      | Cell c when Item.cmp target c ->
-        [(x+1, y)]
-      | _ ->
-        []
-  let rec check_row_to_queue2 row orig_y left right y target acc =
-    if left > right then
-      acc
-    else
-      let cur_add = check_cur_cell left orig_y row.(left) target in
-      let adj_add =
-        if even y then
-          check_prev_cell row left orig_y target
-        else
-          check_next_cell row left orig_y target
-      in
-      check_row_to_queue2 row orig_y (left+1) right y target (cur_add @ adj_add @ acc)
-
-  let check_row_to_queue row r_y left right y target =
+    in
+    let check_prev_cell row x y target =
+      match prev_cell row x with
+        | Cell c when Item.cmp target c ->
+          [(x-1, y)]
+        | _ ->
+          []
+    in
+    let check_next_cell row x y target =
+      match next_cell row x with
+        | Cell c when Item.cmp target c ->
+          [(x+1, y)]
+        | _ ->
+          []
+    in
+    let rec aux_check_row_to_queue row orig_y left right y target acc =
+      if left > right then
+        acc
+      else
+        let cur_add = check_cur_cell left orig_y row.(left) target in
+        let adj_add =
+          if even y then
+            check_prev_cell row left orig_y target
+          else
+            check_next_cell row left orig_y target
+        in
+        aux_check_row_to_queue row orig_y (left+1) right y target (cur_add @ adj_add @ acc)
+    in
     match row with
       | Norow -> []
       | Row a ->
-        check_row_to_queue2 a r_y left right y target []
+        aux_check_row_to_queue a r_y left right y target []
 
   let find_cells_to_queue (iter, plate) target left right y =
     let prev_row = prev_row plate y in
@@ -162,10 +183,12 @@ module Fill (Item : Item) = struct
       Printf.printf "fill_step_row: left=%d, right=%d\n" left right;
       Printf.printf "fill_step_row: row before update\n";
       print_row row;
+      print_stat c_stat;
       let new_stat = update_cells !iter row left right new_data stat in
       let (add_cnt, new_c_stat) = new_stat in
       Printf.printf "fill_step_row: row after update, add=%d\n" add_cnt;
       print_row row;
+      print_stat new_c_stat;
       plate.(y) <- row;
       let list = find_cells_to_queue (iter, plate) target left right y in
       list, (add_cnt, new_c_stat)
@@ -174,20 +197,27 @@ module Fill (Item : Item) = struct
         Printf.printf "fill_step_row: x:y != target\n";
         [], (0, c_stat)
       )
-  (* cnt: counter of matching items for current iteration *)
+
+  (* fill_step_loop -> [], Item.c_cnt *)
   let rec fill_step_loop (iter, plate) target new_item
-      ((cnt, c_stat) as stat) = function
-    | [] -> [], stat
-    | (x, y) :: t ->
-      Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
-      let (add_cells, new_stat) = fill_step_row (iter, plate) target x
-        y new_item stat in
-      let (add_cnt, new_c_stat) = new_stat in
-      Printf.printf "fill_step_loop add_cnt=%d, added list:\n" add_cnt;
-      List.iter print_coord add_cells;
-      Printf.printf "\n";
-      let n_stat = (cnt + add_cnt, new_c_stat) in
-      fill_step_loop (iter, plate) target new_item n_stat (t @ add_cells)
+      ((cnt, c_stat) as stat) cell_list =
+    let aux_print a_cnt a_add_cnt a_add_cells a_new_c_stat =
+      Printf.printf "fill_step_loop cnt=%d, add_cnt=%d, added list:\n"
+        a_cnt a_add_cnt;
+      List.iter print_coord a_add_cells;
+      Printf.printf "\nnew_";
+      print_stat a_new_c_stat
+    in
+    match cell_list with
+      | [] -> [], stat
+      | (x, y) :: t ->
+        Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
+        let (add_cells, new_stat) = fill_step_row (iter, plate) target x
+          y new_item stat in
+        let (add_cnt, new_c_stat) = new_stat in
+        aux_print cnt add_cnt add_cells new_c_stat;
+        let n_stat = (cnt + add_cnt, new_c_stat) in
+        fill_step_loop (iter, plate) target new_item n_stat (t @ add_cells)
 
   let fill_step (iter, plate) x y new_item =
     Printf.printf "fill_step: x=%d, y=%d, new=%s\n" x y
@@ -260,10 +290,12 @@ end = struct
   let c_to_string map =
     Item.c_to_string map
   module F1 = Fill(Item)
-  let fill_step (iter, plate) x y (n_item : Item.t) =
-    let m1 = Item.c_empty in
-    let m2 = Item.c_inc n_item m1 in
-    Printf.printf "\nfill_step m2:\n%s\n" (Item.c_to_string m2);
+
+  (* modifies iter and plate in place, returns filled statistic for plate *)
+  let fill_step (iter, plate) x y n_item =
+    let stat1 = Item.c_empty in
+    let stat2 = Item.c_inc n_item stat1 in
+    Printf.printf "\nfill_step stat2:\n%s\n" (Item.c_to_string stat2);
 
     let item = Item.set_iter n_item !iter in
     F1.fill_step (iter, plate) x y item

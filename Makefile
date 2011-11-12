@@ -3,8 +3,9 @@ PIQI = $(SRC)/p
 DIRS = $(PIQI) $(SRC)
 OCAMLPATH += $(HOME)/util/ocaml/dist
 
-tags all clean distclean:
-	make -C $(PIQI) $<
-	export OCAMLPATH="$(OCAMLPATH)" ; cd $(SRC) ; omake $<
+all tags clean distclean:
+	echo "target: $@"
+	make -C $(PIQI) $@
+	export OCAMLPATH="$(OCAMLPATH)" ; cd $(SRC) ; omake $@
 
 .PHONY: tags all clean distclean
