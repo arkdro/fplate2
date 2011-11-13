@@ -4,9 +4,12 @@ module type PointSig = sig
   val create    : int -> t
   val create_uniq : t
   val cmp       : t -> t -> bool
+  val cmp_iter  : t -> t -> bool
   val to_string : t -> string
+  val to_string2 : t -> string
   val add_push  : t -> t
   val set_iter: t -> int -> t
+  val copy_iter: t -> t -> t
   val add_iter: t -> t
   val clean     : t -> t
 
@@ -16,6 +19,7 @@ module type PointSig = sig
   val c_set   : c_key -> int -> c_cnt -> c_cnt
   val c_inc_n : c_key -> int -> c_cnt -> c_cnt
   val c_inc   : c_key -> c_cnt -> c_cnt
+  val c_inc_iter   : int -> c_key -> c_cnt -> c_cnt
   val c_to_string : c_cnt -> string
 end
 module rec Point : PointSig = struct
@@ -26,10 +30,20 @@ module rec Point : PointSig = struct
            }
   let create limit = {color = Random.int limit; pushed = false; iter = -1}
   let cmp p1 p2 = p1.color = p2.color
-  let to_string point = string_of_int point.color
+  (* compare colors and check if target iteration is newer *)
+  let cmp_iter {iter=iter_target; color=color_target}
+      {iter=iter_cell; color=color_cell} =
+    Printf.printf "cmp_iter: (i=%d, c=%d), (i=%d, c=%d)\n"
+      iter_target color_target iter_cell color_cell;
+    iter_target > iter_cell && color_target = color_cell
+  let to_string2 point = string_of_int point.color
+  let to_string point =
+    "i=" ^ string_of_int point.iter ^ " " ^
+      "c=" ^ string_of_int point.color ^ ""
   let clean p = {p with pushed=false; iter = -1}
   let add_push p = {p with pushed=true}
   let set_iter p iter = {p with iter = iter}
+  let copy_iter src dest = {dest with iter = src.iter}
   let add_iter p = {p with iter = p.iter+1}
   let create_uniq = {color = -1; pushed = false; iter = -1}
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
@@ -58,6 +72,13 @@ module rec Point : PointSig = struct
       | false ->
         Cnt.add point increment map
   let c_inc point map = c_inc_n point 1 map
+
+  (* increment counter if current iteration newer than point iteration *)
+  let c_inc_iter cur_iter ({iter=iter} as point) map =
+    if cur_iter > iter then
+      c_inc point map
+    else
+      map
   let c_to_string map =
     let item_to_string (k, v) =
       to_string k ^ ": " ^ string_of_int v
