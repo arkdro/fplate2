@@ -7,6 +7,8 @@
 
      0   1   2   3
 ------------------------------------------------------------------
+- check stat for next step color selection
+- check several steps further (dynamic prog, minimax)
 - push to c_cnt both color counter and coordinates for later use in max
 finding
 
