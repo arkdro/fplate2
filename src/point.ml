@@ -19,8 +19,9 @@ module type PointSig = sig
   val c_set   : c_key -> int -> c_cnt -> c_cnt
   val c_inc_n : c_key -> int -> c_cnt -> c_cnt
   val c_inc   : c_key -> c_cnt -> c_cnt
-  val c_inc_iter   : int -> c_key -> c_cnt -> c_cnt
-  val c_to_string : c_cnt -> string
+  val c_inc_iter        : int -> c_key -> c_cnt -> c_cnt
+  val c_inc_iter_target : c_key -> c_key -> c_cnt -> c_cnt
+  val c_to_string       : c_cnt -> string
 end
 module rec Point : PointSig = struct
   type t = { color: int;
@@ -76,6 +77,12 @@ module rec Point : PointSig = struct
   (* increment counter if current iteration newer than point iteration *)
   let c_inc_iter cur_iter ({iter=iter} as point) map =
     if cur_iter > iter then
+      c_inc point map
+    else
+      map
+  (* increment counter if target point iteration newer than point iteration *)
+  let c_inc_iter_target {iter=target_iter} ({iter=iter} as point) map =
+    if target_iter > iter then
       c_inc point map
     else
       map
