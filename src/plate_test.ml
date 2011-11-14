@@ -11,17 +11,14 @@ end = struct
     val loop : P1.p -> int -> int -> int -> unit
   end = struct
     let loop data psz w h =
-      let rec loop2 data psz cnt x =
-        let point = Point.create psz in
+      let rec loop2 data point cnt x =
         Printf.printf "loop2 data: cnt=%d\n" cnt;
         Printf.printf "point=%s\n" (Point.to_string point);
         match cnt with
           | 0 -> ()
           | _ ->
-            let _ = P1.fill_step data x 0 point in
+            let (res_cnt, res_stat) = P1.fill_step data x 0 point in
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
-            let stat = P1.stat data x 0 in
-            let (res_cnt, res_stat) = stat in
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
             Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
             Printf.printf "cur plate after fill_step_count:\n%s\n"
@@ -30,14 +27,17 @@ end = struct
               if res_cnt = w * h then
                 ()
               else
-                loop2 data psz (cnt-1) x
+                let (next_p, max) = P1.get_max res_stat in
+                Printf.printf "next max: %d\n" max;
+                loop2 data next_p (cnt-1) x
             )
       in
       Printf.printf "loop init:\npoint size = %d\n" psz;
       Printf.printf "%s\n" (P1.to_string data);
       let start_x = Random.int w in
       Printf.printf "loop w=%d, x=%d\n" w start_x;
-      loop2 data psz (w*psz) start_x
+      let point = Point.create psz in
+      loop2 data point (w*psz) start_x
   end
 (* ---------------------------------------------------------------------- *)
   let main width height point_size =

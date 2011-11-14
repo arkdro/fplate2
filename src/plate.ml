@@ -22,6 +22,8 @@ module type Item = sig
   val c_inc_iter  : int -> c_key -> c_cnt -> c_cnt
   val c_inc_iter_target : c_key -> c_key -> c_cnt -> c_cnt
   val c_to_string : c_cnt -> string
+  val separate_item     : c_key -> c_cnt -> (int * c_cnt)
+  val get_max           : c_cnt -> (c_key * int)
 end
 (* ---------------------------------------------------------------------- *)
 module Fill (Item : Item) = struct
@@ -326,7 +328,7 @@ module Plate (Item : Item) : sig
   val to_string_array : p -> string array array
  (* exposed for tests only *)
   val fill_step : p -> int -> int -> Item.t -> int * Item.c_cnt
-  val stat : p -> int -> int -> int * Item.c_cnt
+  val get_max   : Item.c_cnt -> (Item.t * int)
 end = struct
   type a = Item.t array array
   type p = (int ref * a)
@@ -359,16 +361,16 @@ end = struct
     (String.concat "\n" lst) ^ "\n"
   let c_to_string map =
     Item.c_to_string map
+
   module F1 = Fill(Item)
 
   (* modifies iter and plate in place, returns filled statistic for plate *)
   let fill_step (iter, plate) x y n_item =
-    (* let stat1 = Item.c_empty in *)
-    (* let stat2 = Item.c_inc n_item stat1 in *)
-    (* Printf.printf "\nfill_step stat2:\n%s\n" (Item.c_to_string stat2); *)
-
     let item = Item.set_iter n_item !iter in
-    F1.fill_step (iter, plate) x y item
+    let (cnt, c_stat) = F1.fill_step (iter, plate) x y item in
+    let (cur_item_stat, c_stat2) = Item.separate_item item c_stat in
+    (cnt + cur_item_stat, c_stat2)
+
   let deep_copy (iter, plate) =
     let deep_copy_row row = Array.copy row in
     let new_plate_outer = Array.copy plate in
@@ -376,9 +378,7 @@ end = struct
     (iter, new_plate_data)
 
   (* counts items of the same color starting from x,y *)
-  let stat plate x y =
-    let temp_plate = deep_copy plate in
-    F1.fill_step_count temp_plate x y
+  let get_max stat = Item.get_max stat
 
 end
 (* ---------------------------------------------------------------------- *)
