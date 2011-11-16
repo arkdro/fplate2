@@ -368,7 +368,11 @@ end = struct
   let fill_step (iter, plate) x y n_item =
     let item = Item.set_iter n_item !iter in
     let (cnt, c_stat) = F1.fill_step (iter, plate) x y item in
-    let (cur_item_stat, c_stat2) = Item.separate_item item c_stat in
+    let (cur_item_stat, c_stat2) =
+      try Item.separate_item item c_stat with
+        | Not_found ->
+          (0, c_stat)
+    in
     (cnt + cur_item_stat, c_stat2)
 
   let deep_copy (iter, plate) =

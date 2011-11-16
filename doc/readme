@@ -7,6 +7,23 @@
 
      0   1   2   3
 ------------------------------------------------------------------
+- push cells with the same target color to separate list for
+  counting of current color sum. It can go so:
+  way 1:
+  - first fill step pushes same target color cells in a list
+  - first fill step finishes processing
+  - plate saved
+  - another fill step counting from the middle with that list
+  - plate restored
+  - result of second fill step is added to the result
+
+  way 2:
+  - fill step pushes same target color cells in a list
+  - plate saved
+  - another fill step runs with that list (on copy of plate)
+  - plate restored
+  - result of second fill step added to another counter
+
 - check stat for next step color selection
 - check several steps further (dynamic prog, minimax)
 - push to c_cnt both color counter and coordinates for later use in max

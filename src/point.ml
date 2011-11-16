@@ -95,7 +95,7 @@ module rec Point : PointSig = struct
     let lst = Cnt.bindings map in
     let str_list = List.map item_to_string lst in
     String.concat "\n" str_list
-  let find item map = Cnt.find item map
+  (* let find item map = Cnt.find item map *)
   let separate_item item map =
     let cur_sum = Cnt.find item map in
     let new_stat = Cnt.remove item map in
