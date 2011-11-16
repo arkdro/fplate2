@@ -24,7 +24,11 @@
   - plate restored
   - result of second fill step added to another counter
 
-- check stat for next step color selection
+- check stat for next step color selection. Next step should be done after
+  "another fill step" from above finished counting and created new plate.
+  Using the new plate is essential for the next step. And the whole next step
+  preparation should be performed as two steps - fill + another fill, to
+  count precisely
 - check several steps further (dynamic prog, minimax)
 - push to c_cnt both color counter and coordinates for later use in max
 finding
