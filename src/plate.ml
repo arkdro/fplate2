@@ -24,6 +24,7 @@ module type Item = sig
   val c_to_string : c_cnt -> string
   val separate_item     : c_key -> c_cnt -> (int * c_cnt)
   val get_max           : c_cnt -> (c_key * int)
+  val keys              : c_cnt -> c_key list
 end
 (* ---------------------------------------------------------------------- *)
 module Fill (Item : Item) = struct
@@ -246,7 +247,6 @@ module Fill (Item : Item) = struct
     in
     Printf.printf "fill_step_row, target: %s\n" (Item.to_string target);
     Printf.printf "fill_step_row, plate:\n%s\n" (to_string (0, plate));
-    let same_targets = [] in
     if Item.cmp plate.(y).(x) target then
       let row = plate.(y) in
       let left = find_leftmost row x target in
@@ -265,17 +265,16 @@ module Fill (Item : Item) = struct
       Printf.printf "update_plate_iter before:\n%s\n" (to_string (0, plate));
       update_plate_iter plate target list;
       Printf.printf "update_plate_iter after:\n%s\n" (to_string (0, plate));
-      list, same_targets, q_stat
+      list, q_stat
     else
       (
         Printf.printf "fill_step_row: x:y != target\n";
-        [], [], stat
+        [], stat
       )
 
   (* fill_step_loop -> [], Item.c_cnt; updates plate in place *)
-  (* same_target_list is used for counting of same color cells *)
   let rec fill_step_loop (iter, plate) target new_item
-      ((cnt, c_stat) as stat) cell_list same_target_list =
+      ((cnt, c_stat) as stat) cell_list =
     Printf.printf "fill_step_loop, target: %s\n" (Item.to_string target);
     let aux_print a_cnt a_add_cells (a_add_cnt, a_new_c_stat) =
       Printf.printf "fill_step_loop cnt=%d, add_cnt=%d, added list:\n"
@@ -285,26 +284,22 @@ module Fill (Item : Item) = struct
       print_stat a_new_c_stat
     in
     match cell_list with
-      | [] -> same_target_list, stat
+      | [] -> stat
       | (x, y) :: t ->
         Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
-        let (add_cells, add_same_tg, new_stat) = fill_step_row
+        let (add_cells, new_stat) = fill_step_row
           (iter, plate) target x y new_item stat in
         aux_print cnt add_cells new_stat;
         fill_step_loop (iter, plate) target new_item new_stat
-          (t @ add_cells) (add_same_tg @ same_target_list)
-
-  let fill_step2 (iter, plate) target new_item stat same_target_list =
-    stat
+          (t @ add_cells)
 
   let fill_step (iter, plate) x y input_item =
     iter := !iter + 1;
     let new_item = Item.set_iter input_item !iter in
-    Printf.printf "fill_step: x=%d, y=%d, new=%s\n" x y
+    Printf.printf "fill_step: x=%d, y=%d, new: %s\n" x y
       (Item.to_string new_item);
     let cur_cnt = 0 in
     let stat = (cur_cnt, Item.c_empty) in
-    Printf.printf "fill_step cleaned\n";
     let target_0 = plate.(y).(x) in
     let target = Item.set_iter target_0 !iter in
     if Item.cmp new_item target then
@@ -313,22 +308,12 @@ module Fill (Item : Item) = struct
         stat
       )
     else
-      let same_target_list, res_all_stat = fill_step_loop (iter, plate) target
-        new_item stat [(x,y)] [] in
-      Printf.printf "fill_step same target list:\n%s\n"
-        (coord_list_to_string same_target_list);
-      let (res_cnt, res_c_stat) = fill_step2 (iter, plate) target
-        new_item res_all_stat same_target_list in
+      let (res_cnt, res_c_stat) = fill_step_loop (iter, plate) target
+        new_item stat [(x,y)] in
       Printf.printf "fill_step result: iter=%d, cnt=%d,\nc_stat=\n%s\n"
         !iter res_cnt (Item.c_to_string res_c_stat);
       (res_cnt, res_c_stat)
 
-  (* needs DEEP copy to operate on !!! *)
-  let fill_step_count (iter, plate) x y =
-    let new_plate = plate in
-    let new_item = Item.create_uniq in
-    let res = fill_step (iter, new_plate) x y new_item in
-    res
 end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
@@ -339,7 +324,8 @@ module Plate (Item : Item) : sig
   val to_string_array : p -> string array array
  (* exposed for tests only *)
   val fill_step : p -> int -> int -> Item.t -> int * Item.c_cnt
-  val get_max   : Item.c_cnt -> (Item.t * int)
+  val get_max0  : Item.c_cnt -> (Item.t * int)
+  val get_next_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
 end = struct
   type a = Item.t array array
   type p = (int ref * a)
@@ -375,25 +361,43 @@ end = struct
 
   module F1 = Fill(Item)
 
-  (* modifies iter and plate in place, returns filled statistic for plate *)
-  let fill_step (iter, plate) x y n_item =
-    let item = Item.set_iter n_item !iter in
-    let (cnt, c_stat) = F1.fill_step (iter, plate) x y item in
-    let (cur_item_stat, c_stat2) =
-      try Item.separate_item item c_stat with
-        | Not_found ->
-          (0, c_stat)
-    in
-    (cnt + cur_item_stat, c_stat2)
-
   let deep_copy (iter, plate) =
     let deep_copy_row row = Array.copy row in
     let new_plate_outer = Array.copy plate in
     let new_plate_data = Array.map deep_copy_row new_plate_outer in
     (iter, new_plate_data)
 
-  (* counts items of the same color starting from x,y *)
-  let get_max stat = Item.get_max stat
+  (* modifies iter and plate in place, returns filled statistic for plate *)
+  let fill_step (iter, plate) x y n_item =
+    let item = Item.set_iter n_item !iter in
+    let _cnt, _c_stat = F1.fill_step (iter, plate) x y item in
+    let tmp_item = Item.create_uniq in
+    let tmp_data = deep_copy (iter, plate) in
+    Printf.printf "point.fill_step step2\n";
+    let (res_cnt, res_c_stat) = F1.fill_step tmp_data x y tmp_item in
+    Printf.printf "point.fill_step step2 done\n";
+    (res_cnt, res_c_stat)
 
+  let get_max0 stat = Item.get_max stat
+  (* for every color in stat perform fill_step and count newly filled
+     area. Then choose max of them *)
+
+  let get_next_sums (iter, plate) x y stat =
+    let do_one_color (iter, plate) x y item =
+      let tmp_data = deep_copy (iter, plate) in
+      F1.fill_step tmp_data x y item
+    in
+    let f tmp_item =
+      let (cnt, stat) = do_one_color (iter, plate) x y tmp_item in
+      Printf.printf "get_max, one color res: cnt=%d, stat:\n%s\n" cnt
+        (Item.c_to_string stat);
+      (tmp_item, cnt)
+    in
+    let keys = Item.keys stat in
+    List.map f keys
+
+  let get_sum_sorted (iter, plate) x y stat =
+    let lst = get_next_sums (iter, plate) x y stat in
+    List.sort (fun (_, a) (_, b) -> compare b a) lst
 end
 (* ---------------------------------------------------------------------- *)

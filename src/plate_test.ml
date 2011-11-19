@@ -21,16 +21,19 @@ end = struct
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
             Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
-            Printf.printf "cur plate after fill_step_count:\n%s\n"
-              (P1.to_string data);
-            (
-              if res_cnt = w * h then
-                ()
-              else
-                let (next_p, max) = P1.get_max res_stat in
-                Printf.printf "next max: %d\n" max;
+            if res_cnt = w * h then
+              ()
+            else
+              (
+                let (next_p, max) =
+                  try P1.get_max0 res_stat with
+                    | Failure "hd" ->
+                      Printf.printf "no max found\n";
+                      Point.create psz, 0
+                in
+                Printf.printf "next cell: %s\n" (Point.to_string next_p);
                 loop2 data next_p (cnt-1) x
-            )
+              )
       in
       Printf.printf "loop init:\npoint size = %d\n" psz;
       Printf.printf "%s\n" (P1.to_string data);

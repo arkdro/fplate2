@@ -24,6 +24,8 @@ module type PointSig = sig
   val c_to_string       : c_cnt -> string
   val separate_item     : c_key -> c_cnt -> (int * c_cnt)
   val get_max           : c_cnt -> (c_key * int)
+  (* val map               : (int -> int) -> c_cnt -> c_cnt *)
+  val keys              : c_cnt -> c_key list
 end
 module rec Point : PointSig = struct
   type t = { color: int;
@@ -105,6 +107,11 @@ module rec Point : PointSig = struct
     let list = Cnt.bindings map in
     let sorted = List.sort f list in
     List.hd sorted
+  let map f map = Cnt.map f map
+  let keys map =
+    let lst = Cnt.bindings map in
+    let res_lst, _ = List.split lst in
+    res_lst
 
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
 
