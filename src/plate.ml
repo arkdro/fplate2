@@ -325,7 +325,8 @@ module Plate (Item : Item) : sig
  (* exposed for tests only *)
   val fill_step : p -> int -> int -> Item.t -> int * Item.c_cnt
   val get_max0  : Item.c_cnt -> (Item.t * int)
-  val get_next_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
+  val next_step_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
+  val next_step_sums_sorted : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
 end = struct
   type a = Item.t array array
   type p = (int ref * a)
@@ -382,22 +383,20 @@ end = struct
   (* for every color in stat perform fill_step and count newly filled
      area. Then choose max of them *)
 
-  let get_next_sums (iter, plate) x y stat =
-    let do_one_color (iter, plate) x y item =
-      let tmp_data = deep_copy (iter, plate) in
-      F1.fill_step tmp_data x y item
-    in
+  let next_step_sums (iter, plate) x y stat =
     let f tmp_item =
-      let (cnt, stat) = do_one_color (iter, plate) x y tmp_item in
-      Printf.printf "get_max, one color res: cnt=%d, stat:\n%s\n" cnt
-        (Item.c_to_string stat);
+      Printf.printf "next_step_sums, one color, item: %s\n" (Item.to_string tmp_item);
+      let tmp_data = deep_copy (iter, plate) in
+      let (cnt, stat) = F1.fill_step tmp_data x y tmp_item in
+      Printf.printf "next_step_sums, one color res: cnt=%d, stat:\n%s\n"
+        cnt (Item.c_to_string stat);
       (tmp_item, cnt)
     in
     let keys = Item.keys stat in
     List.map f keys
 
-  let get_sum_sorted (iter, plate) x y stat =
-    let lst = get_next_sums (iter, plate) x y stat in
+  let next_step_sums_sorted (iter, plate) x y stat =
+    let lst = next_step_sums (iter, plate) x y stat in
     List.sort (fun (_, a) (_, b) -> compare b a) lst
 end
 (* ---------------------------------------------------------------------- *)

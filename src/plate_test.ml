@@ -13,7 +13,7 @@ end = struct
     let loop data psz w h =
       let rec loop2 data point cnt x =
         Printf.printf "loop2 data: cnt=%d\n" cnt;
-        Printf.printf "point=%s\n" (Point.to_string point);
+        Printf.printf "loop2 point: %s\n" (Point.to_string point);
         match cnt with
           | 0 -> ()
           | _ ->
@@ -21,19 +21,23 @@ end = struct
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
             Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
-            if res_cnt = w * h then
+            if res_cnt = w * h then (
+              Printf.printf "cur plate done: cnt=%d\n%s\n"
+                res_cnt (P1.to_string data);
               ()
-            else
-              (
-                let (next_p, max) =
-                  try P1.get_max0 res_stat with
-                    | Failure "hd" ->
-                      Printf.printf "no max found\n";
-                      Point.create psz, 0
-                in
-                Printf.printf "next cell: %s\n" (Point.to_string next_p);
-                loop2 data next_p (cnt-1) x
-              )
+            ) else (
+              let sums = P1.next_step_sums_sorted data x 0 res_stat in
+              let (next_p, max) = match sums with
+                | [] ->
+                  Printf.printf "no max found\n";
+                  Point.create psz, 0
+                | (p, n) :: t ->
+                  p, n
+              in
+              Printf.printf "next cell: %s, n=%d\n"
+                (Point.to_string next_p) max;
+              loop2 data next_p (cnt-1) x
+            )
       in
       Printf.printf "loop init:\npoint size = %d\n" psz;
       Printf.printf "%s\n" (P1.to_string data);
