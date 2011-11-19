@@ -33,7 +33,10 @@ module Fill (Item : Item) = struct
   (* debug print *)
   let to_string_row row = Array.map Item.to_string row
   let to_string_array p = Array.map to_string_row p
-  (* let str_row row = Array.map (fun x -> (Item.to_string x) ^ ";") row *)
+  let coord_list_to_string lst =
+    let lst1 = List.map (fun (x,y) -> Printf.sprintf "(%d, %d)" x y) lst in
+    String.concat ";" lst1
+
   let row_to_string row =
     let a1 = to_string_row row in
     let lst = Array.to_list a1 in
@@ -243,6 +246,7 @@ module Fill (Item : Item) = struct
     in
     Printf.printf "fill_step_row, target: %s\n" (Item.to_string target);
     Printf.printf "fill_step_row, plate:\n%s\n" (to_string (0, plate));
+    let same_targets = [] in
     if Item.cmp plate.(y).(x) target then
       let row = plate.(y) in
       let left = find_leftmost row x target in
@@ -256,22 +260,22 @@ module Fill (Item : Item) = struct
       Printf.printf "fill_step_row: row after update, add=%d\n" add_cnt;
       print_row row;
       print_stat upd_c_stat;
-      (* plate.(y) <- row; *)
       let (list, q_stat) = find_cells_to_queue (iter, plate) target
         left right y upd_stat in
       Printf.printf "update_plate_iter before:\n%s\n" (to_string (0, plate));
       update_plate_iter plate target list;
       Printf.printf "update_plate_iter after:\n%s\n" (to_string (0, plate));
-      list, q_stat
+      list, same_targets, q_stat
     else
       (
         Printf.printf "fill_step_row: x:y != target\n";
-        [], stat
+        [], [], stat
       )
 
   (* fill_step_loop -> [], Item.c_cnt; updates plate in place *)
+  (* same_target_list is used for counting of same color cells *)
   let rec fill_step_loop (iter, plate) target new_item
-      ((cnt, c_stat) as stat) cell_list =
+      ((cnt, c_stat) as stat) cell_list same_target_list =
     Printf.printf "fill_step_loop, target: %s\n" (Item.to_string target);
     let aux_print a_cnt a_add_cells (a_add_cnt, a_new_c_stat) =
       Printf.printf "fill_step_loop cnt=%d, add_cnt=%d, added list:\n"
@@ -281,13 +285,17 @@ module Fill (Item : Item) = struct
       print_stat a_new_c_stat
     in
     match cell_list with
-      | [] -> [], stat
+      | [] -> same_target_list, stat
       | (x, y) :: t ->
         Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
-        let (add_cells, new_stat) = fill_step_row (iter, plate) target x
-          y new_item stat in
+        let (add_cells, add_same_tg, new_stat) = fill_step_row
+          (iter, plate) target x y new_item stat in
         aux_print cnt add_cells new_stat;
-        fill_step_loop (iter, plate) target new_item new_stat (t @ add_cells)
+        fill_step_loop (iter, plate) target new_item new_stat
+          (t @ add_cells) (add_same_tg @ same_target_list)
+
+  let fill_step2 (iter, plate) target new_item stat same_target_list =
+    stat
 
   let fill_step (iter, plate) x y input_item =
     iter := !iter + 1;
@@ -305,9 +313,12 @@ module Fill (Item : Item) = struct
         stat
       )
     else
-      let _, res_all_stat = fill_step_loop (iter, plate) target
-        new_item stat [(x,y)] in
-      let (res_cnt, res_c_stat) = res_all_stat in
+      let same_target_list, res_all_stat = fill_step_loop (iter, plate) target
+        new_item stat [(x,y)] [] in
+      Printf.printf "fill_step same target list:\n%s\n"
+        (coord_list_to_string same_target_list);
+      let (res_cnt, res_c_stat) = fill_step2 (iter, plate) target
+        new_item res_all_stat same_target_list in
       Printf.printf "fill_step result: iter=%d, cnt=%d,\nc_stat=\n%s\n"
         !iter res_cnt (Item.c_to_string res_c_stat);
       (res_cnt, res_c_stat)

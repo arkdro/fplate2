@@ -1,3 +1,7 @@
+1 - coordinates and adjacent cells
+1.1 - coordinates are zero based: the very first point has (0,0) coordinates
+1.2 - there are 6 adjacent cells: 2 up, 2 sides, 2 down
+
    0   1   2   3
 
 0  --  ++  ++  --      x, x-1
@@ -6,10 +10,17 @@
 3    --  --  --  --
 
      0   1   2   3
-------------------------------------------------------------------
+
+2 - sum of newly filled area:
+2.1 -
+- do first fill step
+- create a copy (because of mutable plate) of plate
+- do another fill step (on copy of plate)
+- calc stat
+2.2 -
 - push cells with the same target color to separate list for
   counting of current color sum. It can go so:
-  way 1:
+  2.2.1 - way 1
   - first fill step pushes same target color cells in a list
   - first fill step finishes processing
   - plate saved
@@ -17,19 +28,22 @@
   - plate restored
   - result of second fill step is added to the result
 
-  way 2:
+  2.2.2 - way 2
   - fill step pushes same target color cells in a list
   - plate saved
   - another fill step runs with that list (on copy of plate)
   - plate restored
   - result of second fill step added to another counter
 
-- check stat for next step color selection. Next step should be done after
-  "another fill step" from above finished counting and created new plate.
-  Using the new plate is essential for the next step. And the whole next step
-  preparation should be performed as two steps - fill + another fill, to
-  count precisely
+fill_step2(list):
+for each i of list {
+fill_step, starting from i. Compare colors and iter counters.
+add stat
+}
+
+3
+- check stat for next step color selection. Next step should be based on
+  current statistic
 - check several steps further (dynamic prog, minimax)
-- push to c_cnt both color counter and coordinates for later use in max
-finding
+#- push to c_cnt both color counter and coordinates for later use in max finding
 
