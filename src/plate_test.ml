@@ -11,13 +11,33 @@ end = struct
     val loop : P1.p -> int -> int -> int -> unit
   end = struct
     let loop data psz w h =
-      let rec loop2 data point cnt x =
+      let get_init_stat data x y =
+        Printf.printf "get_init_stat, x=%d, y=%d\n" x y;
+        let (_cnt, stat) = P1.get_stat data x y in
+        Printf.printf "get_init_stat, stat:\n%s\n" (P1.c_to_string stat);
+        stat
+      in
+      let get_next_cell data x y stat =
+        Printf.printf "next cell start\n";
+        let sums = P1.next_step_sums_sorted data x 0 stat in
+        let (next_p, max) = match sums with
+          | [] ->
+            Printf.printf "no max found\n";
+            Point.create psz, 0
+          | (p, n) :: t ->
+            p, n
+        in
+        Printf.printf "next cell res: %s, n=%d\n" (Point.to_string next_p) max;
+        next_p
+      in
+      let rec loop2 data cnt x y stat =
         Printf.printf "loop2 data: cnt=%d\n" cnt;
-        Printf.printf "loop2 point: %s\n" (Point.to_string point);
         match cnt with
           | 0 -> ()
           | _ ->
-            let (res_cnt, res_stat) = P1.fill_step data x 0 point in
+            let point = get_next_cell data x y stat in
+            Printf.printf "loop2 point: %s\n" (Point.to_string point);
+            let (res_cnt, res_stat) = P1.fill_step data x y point in
             Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
             Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
@@ -26,25 +46,16 @@ end = struct
                 res_cnt (P1.to_string data);
               ()
             ) else (
-              let sums = P1.next_step_sums_sorted data x 0 res_stat in
-              let (next_p, max) = match sums with
-                | [] ->
-                  Printf.printf "no max found\n";
-                  Point.create psz, 0
-                | (p, n) :: t ->
-                  p, n
-              in
-              Printf.printf "next cell: %s, n=%d\n"
-                (Point.to_string next_p) max;
-              loop2 data next_p (cnt-1) x
+              loop2 data (cnt-1) x y res_stat
             )
       in
       Printf.printf "loop init:\npoint size = %d\n" psz;
       Printf.printf "%s\n" (P1.to_string data);
       let start_x = Random.int w in
-      Printf.printf "loop w=%d, x=%d\n" w start_x;
-      let point = Point.create psz in
-      loop2 data point (w*psz) start_x
+      let start_y = 0 in
+      let init_stat = get_init_stat data start_x start_y in
+      Printf.printf "loop w=%d, x=%d, y=%d\n" w start_x start_y;
+      loop2 data (w*psz*5) start_x start_y init_stat
   end
 (* ---------------------------------------------------------------------- *)
   let main width height point_size =

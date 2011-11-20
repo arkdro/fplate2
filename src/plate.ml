@@ -327,6 +327,7 @@ module Plate (Item : Item) : sig
   val get_max0  : Item.c_cnt -> (Item.t * int)
   val next_step_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
   val next_step_sums_sorted : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
+  val get_stat  : p -> int -> int -> int * Item.c_cnt
 end = struct
   type a = Item.t array array
   type p = (int ref * a)
@@ -383,20 +384,39 @@ end = struct
   (* for every color in stat perform fill_step and count newly filled
      area. Then choose max of them *)
 
-  let next_step_sums (iter, plate) x y stat =
+  let next_step_sums data x y stat =
     let f tmp_item =
-      Printf.printf "next_step_sums, one color, item: %s\n" (Item.to_string tmp_item);
-      let tmp_data = deep_copy (iter, plate) in
-      let (cnt, stat) = F1.fill_step tmp_data x y tmp_item in
-      Printf.printf "next_step_sums, one color res: cnt=%d, stat:\n%s\n"
-        cnt (Item.c_to_string stat);
+      Printf.printf "next_step_sums, f, item: %s\n"
+        (Item.to_string tmp_item);
+      let tmp_data = deep_copy data in
+      let (cnt, t_stat) = fill_step tmp_data x y tmp_item in
+      Printf.printf "next_step_sums, f res, ";
+      Printf.printf "item: %s, cnt=%d, stat:\n%s\n"
+        (Item.to_string tmp_item) cnt (Item.c_to_string t_stat);
       (tmp_item, cnt)
     in
     let keys = Item.keys stat in
     List.map f keys
 
-  let next_step_sums_sorted (iter, plate) x y stat =
-    let lst = next_step_sums (iter, plate) x y stat in
-    List.sort (fun (_, a) (_, b) -> compare b a) lst
+  let next_step_sums_sorted data x y stat =
+    let print_list lst =
+      let f (i, c) =
+        Printf.sprintf "item: %s, sum=%d" (Item.to_string i) c
+      in
+      Printf.printf "next_step_sums_sorted list:\n";
+      let lst2 = List.map f lst in
+      let lst3 = String.concat "\n" lst2 in
+      Printf.printf "%s\n" lst3
+    in
+    let lst = next_step_sums data x y stat in
+    let res = List.sort (fun (_, a) (_, b) -> compare b a) lst in
+    print_list res;
+    res
+
+  let get_stat data x y =
+    let tmp_item = Item.create_uniq in
+    let tmp_data = deep_copy data in
+    F1.fill_step tmp_data x y tmp_item
+
 end
 (* ---------------------------------------------------------------------- *)
