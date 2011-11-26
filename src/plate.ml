@@ -309,7 +309,9 @@ module Fill (Item : Item) = struct
   (* fill_step_loop -> [], Item.c_cnt; updates plate in place *)
   let rec fill_step_loop (iter, plate) target new_item
       ((cnt, c_stat) as stat) cell_list =
-    Printf.printf "fill_step_loop, target: %s\n" (Item.to_string target);
+    IFDEF DEBUG THEN (
+      Printf.printf "fill_step_loop, target: %s\n" (Item.to_string target)
+    ) ENDIF;
     let _aux_print a_cnt a_add_cells (a_add_cnt, a_new_c_stat) =
       Printf.printf "fill_step_loop cnt=%d, add_cnt=%d, added list:\n"
         a_cnt a_add_cnt;
