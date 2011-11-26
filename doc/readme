@@ -47,3 +47,13 @@ add stat
 - check several steps further (dynamic prog, minimax)
 #- push to c_cnt both color counter and coordinates for later use in max finding
 
+4
+try domain approach:
+- generate plate
+- assign every group of cells (with the same color) to a domain
+- for each domain prepare all necessary data:
+  - list and amount of cells in domain
+  - list and amount of adjacent domains and cells
+  - ...
+- do flood fill as with separate cells but instead of
+individual cells use domains
