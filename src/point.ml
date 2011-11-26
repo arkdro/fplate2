@@ -38,8 +38,10 @@ module rec Point : PointSig = struct
   (* compare colors and check if target iteration is newer *)
   let cmp_iter {iter=iter_target; color=color_target}
       {iter=iter_cell; color=color_cell} =
-    Printf.printf "cmp_iter: (i=%d, c=%d), (i=%d, c=%d)\n"
-      iter_target color_target iter_cell color_cell;
+    IFDEF DEBUG THEN
+      Printf.printf "cmp_iter: (i=%d, c=%d), (i=%d, c=%d)\n"
+      iter_target color_target iter_cell color_cell
+      ENDIF;
     iter_target > iter_cell && color_target = color_cell
   let to_string2 point = string_of_int point.color
   let to_string point =

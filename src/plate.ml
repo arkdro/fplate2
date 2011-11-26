@@ -47,10 +47,18 @@ module Fill (Item : Item) = struct
     let lst = Array.to_list a1 in
     (String.concat "\n" lst) ^ "\n"
 
-  let print_row row = Printf.printf "%s\n" (row_to_string row)
-  let print_coord (x, y) = Printf.printf "(%d, %d)" x y
+  let print_row row =
+    IFDEF DEBUG THEN
+      Printf.printf "%s\n" (row_to_string row)
+      ENDIF
+  let print_coord (x, y) =
+    IFDEF DEBUG THEN
+      Printf.printf "(%d, %d)" x y
+      ENDIF
   let print_stat c =
-    Printf.printf "c_stat:\n%s\n" (Item.c_to_string c)
+    IFDEF DEBUG THEN
+      Printf.printf "c_stat:\n%s\n" (Item.c_to_string c)
+      ENDIF
 
   let prev_row plate y =
     if y = 0 then
@@ -117,20 +125,26 @@ module Fill (Item : Item) = struct
   let update_cells iter row left right new_data stat =
     let rec aux_update_cells iter row left right idx new_data (cnt, c_stat) =
       if idx > right then (
-        Printf.printf "update_cells done, left=%d, right=%d, idx=%d, cnt=%d\n"
-          left right idx cnt;
-        Printf.printf "row before mark_edges\n";
-        print_row row;
+        IFDEF DEBUG THEN (
+          Printf.printf "update_cells done, left=%d, right=%d, idx=%d, cnt=%d\n"
+            left right idx cnt;
+          Printf.printf "row before mark_edges\n";
+          print_row row
+        ) ENDIF;
         let new_c_stat = mark_edges iter row left right c_stat in
-        Printf.printf "row after mark_edges\n";
-        print_row row;
-        print_stat new_c_stat;
+        IFDEF DEBUG THEN (
+          Printf.printf "row after mark_edges\n";
+          print_row row;
+          print_stat new_c_stat
+        ) ENDIF;
         (cnt, new_c_stat)
       ) else (
         row.(idx) <- new_data;
-        Printf.printf "update_cells:\n";
-        print_row row;
-        print_stat c_stat;
+        IFDEF DEBUG THEN (
+          Printf.printf "update_cells:\n";
+          print_row row;
+          print_stat c_stat
+        ) ENDIF;
         aux_update_cells iter row left right (idx+1) new_data (cnt+1, c_stat)
       )
     in
@@ -208,36 +222,44 @@ module Fill (Item : Item) = struct
         aux_check_row_to_queue a r_y left right y target [] stat
 
   let find_cells_to_queue (iter, plate) target left right y (_x, stat) =
-    Printf.printf "find_cells_to_queue, target: %s\n" (Item.to_string target);
-    print_stat stat;
-    Printf.printf "find_cells_to_queue, prev row:\n";
+    IFDEF DEBUG THEN (
+      Printf.printf "find_cells_to_queue, target: %s\n" (Item.to_string target);
+      print_stat stat;
+      Printf.printf "find_cells_to_queue, prev row:\n"
+    ) ENDIF;
     let prev_row = prev_row plate y in
     let (prev_cells, pr_stat) = check_row_to_queue prev_row (y-1) left
       right y target stat in
-    Printf.printf "queued prev_cells: ";
-    List.iter print_coord prev_cells;
-    Printf.printf "\n";
-    print_stat pr_stat;
-    Printf.printf "find_cells_to_queue, next row:\n";
+    IFDEF DEBUG THEN (
+      Printf.printf "queued prev_cells: ";
+      List.iter print_coord prev_cells;
+      Printf.printf "\n";
+      print_stat pr_stat;
+      Printf.printf "find_cells_to_queue, next row:\n"
+    ) ENDIF;
     let next_row = next_row plate y in
     let (next_cells, n_stat) = check_row_to_queue next_row (y+1) left
       right y target pr_stat in
-    Printf.printf "queued next_cells: ";
-    List.iter print_coord next_cells;
-    Printf.printf "\n";
-    print_stat n_stat;
+    IFDEF DEBUG THEN (
+      Printf.printf "queued next_cells: ";
+      List.iter print_coord next_cells;
+      Printf.printf "\n";
+      print_stat n_stat
+    ) ENDIF;
     prev_cells @ next_cells, (_x, n_stat)
 
   let fill_step_row (iter, plate) target x y new_data ((cnt, c_stat) as stat) =
     let update_plate_iter u_plt u_target list =
-      let lst1 = List.map
-        (fun (x, y) ->
-          Printf.sprintf "%d, %d" x y
-        )
-        list
-      in
-      let lst2 = String.concat "; " lst1 in
-      Printf.printf "update_plate_iter list:\n%s\n" lst2;
+      IFDEF DEBUG THEN (
+        let lst1 = List.map
+          (fun (x, y) ->
+            Printf.sprintf "%d, %d" x y
+          )
+          list
+        in
+        let lst2 = String.concat "; " lst1 in
+        Printf.printf "update_plate_iter list:\n%s\n" lst2
+      ) ENDIF;
       List.iter
         (fun (x1, y1) ->
           let new_cell = Item.copy_iter u_target u_plt.(y1).(x1) in
@@ -245,30 +267,42 @@ module Fill (Item : Item) = struct
         )
         list
     in
-    Printf.printf "fill_step_row, target: %s\n" (Item.to_string target);
-    Printf.printf "fill_step_row, plate:\n%s\n" (to_string (0, plate));
+    IFDEF DEBUG THEN (
+      Printf.printf "fill_step_row, target: %s\n" (Item.to_string target);
+      Printf.printf "fill_step_row, plate:\n%s\n" (to_string (0, plate))
+    ) ENDIF;
     if Item.cmp plate.(y).(x) target then
       let row = plate.(y) in
       let left = find_leftmost row x target in
       let right = find_rightmost row x target in
-      Printf.printf "fill_step_row: left=%d, right=%d\n" left right;
-      Printf.printf "fill_step_row: row before update\n";
-      print_row row;
-      print_stat c_stat;
+      IFDEF DEBUG THEN (
+        Printf.printf "fill_step_row: left=%d, right=%d\n" left right;
+        Printf.printf "fill_step_row: row before update\n";
+        print_row row;
+        print_stat c_stat
+      ) ENDIF;
       let upd_stat = update_cells !iter row left right new_data stat in
-      let (add_cnt, upd_c_stat) = upd_stat in
-      Printf.printf "fill_step_row: row after update, add=%d\n" add_cnt;
-      print_row row;
-      print_stat upd_c_stat;
+      IFDEF DEBUG THEN (
+        let (_add_cnt, _upd_c_stat) = upd_stat in
+        Printf.printf "fill_step_row: row after update, add=%d\n" _add_cnt;
+        print_row row;
+        print_stat _upd_c_stat
+      ) ENDIF;
       let (list, q_stat) = find_cells_to_queue (iter, plate) target
         left right y upd_stat in
-      Printf.printf "update_plate_iter before:\n%s\n" (to_string (0, plate));
+      IFDEF DEBUG THEN (
+        Printf.printf "update_plate_iter before:\n%s\n" (to_string (0, plate))
+      ) ENDIF;
       update_plate_iter plate target list;
-      Printf.printf "update_plate_iter after:\n%s\n" (to_string (0, plate));
+      IFDEF DEBUG THEN (
+        Printf.printf "update_plate_iter after:\n%s\n" (to_string (0, plate))
+      ) ENDIF;
       list, q_stat
     else
       (
-        Printf.printf "fill_step_row: x:y != target\n";
+        IFDEF DEBUG THEN (
+          Printf.printf "fill_step_row: x:y != target\n"
+        ) ENDIF;
         [], stat
       )
 
@@ -276,7 +310,7 @@ module Fill (Item : Item) = struct
   let rec fill_step_loop (iter, plate) target new_item
       ((cnt, c_stat) as stat) cell_list =
     Printf.printf "fill_step_loop, target: %s\n" (Item.to_string target);
-    let aux_print a_cnt a_add_cells (a_add_cnt, a_new_c_stat) =
+    let _aux_print a_cnt a_add_cells (a_add_cnt, a_new_c_stat) =
       Printf.printf "fill_step_loop cnt=%d, add_cnt=%d, added list:\n"
         a_cnt a_add_cnt;
       List.iter print_coord a_add_cells;
@@ -286,32 +320,42 @@ module Fill (Item : Item) = struct
     match cell_list with
       | [] -> stat
       | (x, y) :: t ->
-        Printf.printf "fill_step_loop: x=%d, y=%d\n" x y;
+        IFDEF DEBUG THEN (
+          Printf.printf "fill_step_loop: x=%d, y=%d\n" x y
+        ) ENDIF;
         let (add_cells, new_stat) = fill_step_row
           (iter, plate) target x y new_item stat in
-        aux_print cnt add_cells new_stat;
+        IFDEF DEBUG THEN (
+          _aux_print cnt add_cells new_stat
+        ) ENDIF;
         fill_step_loop (iter, plate) target new_item new_stat
           (t @ add_cells)
 
   let fill_step (iter, plate) x y input_item =
     iter := !iter + 1;
     let new_item = Item.set_iter input_item !iter in
-    Printf.printf "fill_step: x=%d, y=%d, new: %s\n" x y
-      (Item.to_string new_item);
+    IFDEF DEBUG THEN (
+      Printf.printf "fill_step: x=%d, y=%d, new: %s\n" x y
+        (Item.to_string new_item)
+    ) ENDIF;
     let cur_cnt = 0 in
     let stat = (cur_cnt, Item.c_empty) in
     let target_0 = plate.(y).(x) in
     let target = Item.set_iter target_0 !iter in
     if Item.cmp new_item target then
       (
-        Printf.printf "fill_step target = replacement, exiting\n";
+        IFDEF DEBUG THEN (
+          Printf.printf "fill_step target = replacement, exiting\n"
+        ) ENDIF;
         stat
       )
     else
       let (res_cnt, res_c_stat) = fill_step_loop (iter, plate) target
         new_item stat [(x,y)] in
-      Printf.printf "fill_step result: iter=%d, cnt=%d,\nc_stat=\n%s\n"
-        !iter res_cnt (Item.c_to_string res_c_stat);
+      IFDEF DEBUG THEN
+        Printf.printf "fill_step result: iter=%d, cnt=%d,\nc_stat=\n%s\n"
+        !iter res_cnt (Item.c_to_string res_c_stat)
+        ENDIF;
       (res_cnt, res_c_stat)
 
 end
@@ -343,7 +387,9 @@ end = struct
     let lst = gen_matrix2 [] f psz w h in
     Array.of_list lst
   let gen psz w h =
-    Printf.printf "plate gen: psz=%d, w=%d, h=%d\n" psz w h;
+    IFDEF DEBUG THEN (
+      Printf.printf "plate gen: psz=%d, w=%d, h=%d\n" psz w h
+    ) ENDIF;
     let plate = gen_matrix Item.create psz w h in
     let iter = -1 in
     (ref iter, plate)
@@ -375,9 +421,13 @@ end = struct
     let _cnt, _c_stat = F1.fill_step (iter, plate) x y item in
     let tmp_item = Item.create_uniq in
     let tmp_data = deep_copy (iter, plate) in
-    Printf.printf "point.fill_step step2\n";
+    IFDEF DEBUG THEN (
+      Printf.printf "point.fill_step step2\n"
+    ) ENDIF;
     let (res_cnt, res_c_stat) = F1.fill_step tmp_data x y tmp_item in
-    Printf.printf "point.fill_step step2 done\n";
+    IFDEF DEBUG THEN (
+      Printf.printf "point.fill_step step2 done\n"
+    ) ENDIF;
     (res_cnt, res_c_stat)
 
   let get_max0 stat = Item.get_max stat
@@ -386,20 +436,24 @@ end = struct
 
   let next_step_sums data x y stat =
     let f tmp_item =
-      Printf.printf "next_step_sums, f, item: %s\n"
-        (Item.to_string tmp_item);
+      IFDEF DEBUG THEN (
+        Printf.printf "next_step_sums, f, item: %s\n"
+          (Item.to_string tmp_item)
+      ) ENDIF;
       let tmp_data = deep_copy data in
       let (cnt, t_stat) = fill_step tmp_data x y tmp_item in
-      Printf.printf "next_step_sums, f res, ";
-      Printf.printf "item: %s, cnt=%d, stat:\n%s\n"
-        (Item.to_string tmp_item) cnt (Item.c_to_string t_stat);
+      IFDEF DEBUG THEN (
+        Printf.printf "next_step_sums, f res, ";
+        Printf.printf "item: %s, cnt=%d, stat:\n%s\n"
+          (Item.to_string tmp_item) cnt (Item.c_to_string t_stat)
+      ) ENDIF;
       (tmp_item, cnt)
     in
     let keys = Item.keys stat in
     List.map f keys
 
   let next_step_sums_sorted data x y stat =
-    let print_list lst =
+    let _print_list lst =
       let f (i, c) =
         Printf.sprintf "item: %s, sum=%d" (Item.to_string i) c
       in
@@ -410,7 +464,9 @@ end = struct
     in
     let lst = next_step_sums data x y stat in
     let res = List.sort (fun (_, a) (_, b) -> compare b a) lst in
-    print_list res;
+    IFDEF DEBUG THEN (
+      _print_list res
+    ) ENDIF;
     res
 
   let get_stat data x y =

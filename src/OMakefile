@@ -95,6 +95,21 @@ else
 #eprintln(new OCAMLPATH=-=$(OCAMLPATH)=-)
 setenv(OCAMLPATH, $(OCAMLPATH))
 
+# for debug print
+if $(defined-env DEBUG)
+	if $(not $(DEBUG))
+		DEBUG_OPT =
+		export
+	else
+		DEBUG_OPT = -ppopt -DDEBUG
+		export
+	export
+else
+	DEBUG_OPT =
+	export
+#setenv(DEBUG, $(DEBUG))
+#eprintln(new debug opt -=$(DEBUG_OPT)=-)
+
 ################################################
 # Configuration.  You may want to modify any of these configuration
 # variables.
@@ -104,8 +119,10 @@ setenv(OCAMLPATH, $(OCAMLPATH))
 # This project requires ocamlfind (default - false).
 #
 USE_OCAMLFIND = true
+OCAMLFINDFLAGS += -syntax camlp4o -ppopt pa_macro.cmo $(DEBUG_OPT)
 #
 OCAMLPACKS[] =
+	camlp4
 	piqi
 	piqi.runtime
 #    pack1
