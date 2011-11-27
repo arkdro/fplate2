@@ -57,3 +57,10 @@ try domain approach:
   - ...
 - do flood fill as with separate cells but instead of
 individual cells use domains
+
+5
+study using not very random data during plate generation. This might increase
+domain size. Possible ways:
+  - on generation choose next color same as prev color with some probability
+  - after generation perform second pass which sets the color of a cell same
+    as a random adjacent cell with some probability
