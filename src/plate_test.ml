@@ -4,7 +4,7 @@ open Point
 open Plate
 module P1 = Plate (Point)
 module Plate_test : sig
-  val main : int -> int -> int -> unit
+  val main : int -> int -> int -> int -> unit
 end = struct
 (* ---------------------------------------------------------------------- *)
   module Loop_test : sig
@@ -66,10 +66,10 @@ end = struct
       loop2 data (w*psz*5) start_x start_y init_stat
   end
 (* ---------------------------------------------------------------------- *)
-  let main width height point_size =
+  let main width height point_size spread_ratio =
     (* let _ = Rinit.r_init in *)
     Printf.printf "main: %d, %d, %d\n" width height point_size;
-    let data = P1.gen point_size width height in
+    let data = P1.gen point_size width height spread_ratio in
     Printf.printf "begin data:\n%s\n" (P1.to_string data);
     Loop_test.loop data point_size width height;
     Printf.printf "main end, data:\n%s\n" (P1.to_string data)

@@ -364,7 +364,7 @@ end
 (* ---------------------------------------------------------------------- *)
 module Plate (Item : Item) : sig
   type p
-  val gen : int -> int -> int -> p
+  val gen : int -> int -> int -> int -> p
   val to_string : p -> string
   val c_to_string : Item.c_cnt -> string
   val to_string_array : p -> string array array
@@ -379,7 +379,74 @@ end = struct
   type p = (int ref * a)
   type t = Item.t
 
-  let gen psz w h =
+  module F1 = Fill(Item)
+
+  let adj_cells_cur_row row x y =
+    let prev = F1.prev_cell row x in
+    let next = F1.next_cell row x in
+    [prev; next]
+  let adj_cells_adj_row in_row x y =
+    match in_row with
+      | F1.Norow -> []
+      | F1.Row row ->
+        let cur = F1.Cell row.(x) in
+        let add =
+          if (y mod 2) = 0 then F1.prev_cell row x
+          else F1.next_cell row x
+        in
+        [cur; add]
+
+  (* returns list of cells (and/or Nocell's) that are adjacent to (x,y) *)
+  let adj_list plate x y =
+    if y >= Array.length plate then []
+    else if y < 0 then []
+    else
+      let cur = adj_cells_cur_row plate.(y) x y in
+      let prev = adj_cells_adj_row (F1.prev_row plate y) x y in
+      let next = adj_cells_adj_row (F1.next_row plate y) x y in
+      prev @ cur @ next
+
+  let adj_random_select list =
+    let f = function
+      | F1.Nocell -> false
+      | F1.Cell _ -> true
+    in
+    let cleared = List.filter f list in
+    let len = List.length cleared in
+    let rand = Random.int len in
+    List.nth cleared rand
+
+  let rand_spread plate w h ratio =
+    let rec a2_2 plt x y = match x with
+      | -1 -> ()
+      | _ ->
+        let list = adj_list plt x y in
+        (
+          match adj_random_select list with
+            | F1.Cell cell ->
+              plt.(y).(x) <- cell
+            | _ -> ()
+        );
+        a2_2 plt (x-1) y
+    in
+    let a2 plt y =
+      let row = plt.(y) in
+      a2_2 plt ((Array.length row)-1) y in
+    let rec a1_2 plt y = match y with
+      | -1 -> ()
+      | _ ->
+        a2 plt y;
+        a1_2 plt (y+1)
+    in
+    let a1 plt = a1_2 plt ((Array.length plt)-1) in
+    (
+      match ratio with
+        | 0 -> ()
+        | ratio -> a1 plate
+    );
+      plate
+
+  let gen psz w h ratio =
     let gen_line f psz len = Array.init len (fun _ -> f psz)
     in
     let rec gen_matrix2 acc f psz w = function
@@ -394,7 +461,8 @@ end = struct
     IFDEF DEBUG THEN (
       Printf.printf "plate gen: psz=%d, w=%d, h=%d\n" psz w h
     ) ENDIF;
-    let plate = gen_matrix Item.create psz w h in
+    let pure_plate = gen_matrix Item.create psz w h in
+    let plate = rand_spread pure_plate w h ratio in
     let iter = -1 in
     (ref iter, plate)
 
@@ -411,8 +479,6 @@ end = struct
     (String.concat "\n" lst) ^ "\n"
   let c_to_string map =
     Item.c_to_string map
-
-  module F1 = Fill(Item)
 
   let deep_copy (iter, plate) =
     let deep_copy_row row = Array.copy row in
