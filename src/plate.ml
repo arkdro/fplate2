@@ -430,21 +430,20 @@ end = struct
         a2_2 plt (x-1) y
     in
     let a2 plt y =
-      let row = plt.(y) in
-      a2_2 plt ((Array.length row)-1) y in
+      a2_2 plt (w-1) y in
     let rec a1_2 plt y = match y with
       | -1 -> ()
       | _ ->
         a2 plt y;
         a1_2 plt (y+1)
     in
-    let a1 plt = a1_2 plt ((Array.length plt)-1) in
+    let a1 plt = a1_2 plt (h-1) in
     (
       match ratio with
         | 0 -> ()
         | ratio -> a1 plate
     );
-      plate
+    plate
 
   let gen psz w h ratio =
     let gen_line f psz len = Array.init len (fun _ -> f psz)
