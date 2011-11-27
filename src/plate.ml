@@ -378,23 +378,26 @@ end = struct
   type a = Item.t array array
   type p = (int ref * a)
   type t = Item.t
-  (* let cur_point_size x = ??? static var *)
-  let gen_line f psz len =
-    Array.init len (fun _ -> f psz)
-  let rec gen_matrix2 acc f psz w = function
-    | 0 -> acc
-    | h -> let row = gen_line f psz w in
-           gen_matrix2 (row::acc) f psz w (h-1)
-  let gen_matrix f psz w h = 
-    let lst = gen_matrix2 [] f psz w h in
-    Array.of_list lst
+
   let gen psz w h =
+    let gen_line f psz len = Array.init len (fun _ -> f psz)
+    in
+    let rec gen_matrix2 acc f psz w = function
+      | 0 -> acc
+      | h -> let row = gen_line f psz w in
+             gen_matrix2 (row::acc) f psz w (h-1)
+    in
+    let gen_matrix f psz w h = 
+      let lst = gen_matrix2 [] f psz w h in
+      Array.of_list lst
+    in
     IFDEF DEBUG THEN (
       Printf.printf "plate gen: psz=%d, w=%d, h=%d\n" psz w h
     ) ENDIF;
     let plate = gen_matrix Item.create psz w h in
     let iter = -1 in
     (ref iter, plate)
+
   let to_string_row row = Array.map Item.to_string row
   let to_string_array (_, p) = Array.map to_string_row p
   (* let str_row row = Array.map (fun x -> (Item.to_string x) ^ ";") row *)
