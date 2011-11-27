@@ -18,7 +18,9 @@ end = struct
         stat
       in
       let get_next_cell data x y stat =
-        Printf.printf "next cell start\n";
+        IFDEF DEBUG THEN (
+          Printf.printf "next cell start\n"
+        ) ENDIF;
         let sums = P1.next_step_sums_sorted data x 0 stat in
         let (next_p, max) = match sums with
           | [] ->
@@ -27,7 +29,9 @@ end = struct
           | (p, n) :: t ->
             p, n
         in
-        Printf.printf "next cell res: %s, n=%d\n" (Point.to_string next_p) max;
+        IFDEF DEBUG THEN (
+          Printf.printf "next cell res: %s, n=%d\n" (Point.to_string next_p) max
+        ) ENDIF;
         next_p
       in
       let rec loop2 data cnt x y stat =
@@ -38,9 +42,13 @@ end = struct
             let point = get_next_cell data x y stat in
             Printf.printf "loop2 point: %s\n" (Point.to_string point);
             let (res_cnt, res_stat) = P1.fill_step data x y point in
-            Printf.printf "cur plate after fill_step:\n%s\n" (P1.to_string data);
+            IFDEF DEBUG THEN (
+              Printf.printf "cur plate after fill_step:\n%s\n"
+                (P1.to_string data);
+              Printf.printf "cur plate res_stat:\n%s\n"
+                (P1.c_to_string res_stat)
+            ) ENDIF;
             Printf.printf "cur plate res_cnt: %d\n" res_cnt;
-            Printf.printf "cur plate res_stat:\n%s\n" (P1.c_to_string res_stat);
             if res_cnt = w * h then (
               Printf.printf "cur plate done: cnt=%d\n%s\n"
                 res_cnt (P1.to_string data);
