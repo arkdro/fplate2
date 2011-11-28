@@ -381,6 +381,21 @@ end = struct
 
   module F1 = Fill(Item)
 
+  let to_string_row row = Array.map Item.to_string row
+  let to_string_array (_, p) = Array.map to_string_row p
+  (* let str_row row = Array.map (fun x -> (Item.to_string x) ^ ";") row *)
+  let row_to_string row =
+    let a1 = to_string_row row in
+    let lst = Array.to_list a1 in
+    let res = String.concat ";" lst in
+    res
+  let to_string (_, p) =
+    let a1 = Array.map row_to_string p in
+    let lst = Array.to_list a1 in
+    (String.concat "\n" lst) ^ "\n"
+  let c_to_string map =
+    Item.c_to_string map
+
   let adj_cells_cur_row row x y =
     let prev = F1.prev_cell row x in
     let next = F1.next_cell row x in
@@ -417,31 +432,34 @@ end = struct
     List.nth cleared rand
 
   let rand_spread plate w h ratio =
-    let rec a2_2 plt x y = match x with
+    let rec change_row_aux plt x y = match x with
       | -1 -> ()
       | _ ->
         let list = adj_list plt x y in
         (
           match adj_random_select list with
             | F1.Cell cell ->
-              plt.(y).(x) <- cell
+              if Random.int 100 < ratio then
+                plt.(y).(x) <- cell
+              else ()
             | _ -> ()
         );
-        a2_2 plt (x-1) y
+        change_row_aux plt (x-1) y
     in
-    let a2 plt y =
-      a2_2 plt (w-1) y in
-    let rec a1_2 plt y = match y with
+    let change_row plt y =
+      change_row_aux plt (w-1) y in
+    let rec change_plate_aux plt y = match y with
       | -1 -> ()
       | _ ->
-        a2 plt y;
-        a1_2 plt (y+1)
+        change_row plt y;
+        change_plate_aux plt (y-1)
     in
-    let a1 plt = a1_2 plt (h-1) in
+    let change_plate plt = change_plate_aux plt (h-1) in
     (
       match ratio with
-        | 0 -> ()
-        | ratio -> a1 plate
+        | r when r <= 0 -> ()
+        | r when r > 100 -> ()
+        | _ -> change_plate plate
     );
     plate
 
@@ -458,26 +476,20 @@ end = struct
       Array.of_list lst
     in
     IFDEF DEBUG THEN (
-      Printf.printf "plate gen: psz=%d, w=%d, h=%d\n" psz w h
+      Printf.printf "plate gen: psz=%d, w=%d, h=%d, r=%d\n" psz w h ratio
     ) ENDIF;
     let pure_plate = gen_matrix Item.create psz w h in
+    IFDEF DEBUG THEN (
+      Printf.printf "plate gen pure_plate1:\n%s\n"
+        (to_string (ref 0, pure_plate))
+    ) ENDIF;
     let plate = rand_spread pure_plate w h ratio in
+    IFDEF DEBUG THEN (
+      Printf.printf "plate gen pure_plate2:\n%s\n"
+        (to_string (ref 0, pure_plate))
+    ) ENDIF;
     let iter = -1 in
     (ref iter, plate)
-
-  let to_string_row row = Array.map Item.to_string row
-  let to_string_array (_, p) = Array.map to_string_row p
-  (* let str_row row = Array.map (fun x -> (Item.to_string x) ^ ";") row *)
-  let row_to_string row =
-    let a1 = to_string_row row in
-    let lst = Array.to_list a1 in
-    String.concat ";" lst
-  let to_string (_, p) =
-    let a1 = Array.map row_to_string p in
-    let lst = Array.to_list a1 in
-    (String.concat "\n" lst) ^ "\n"
-  let c_to_string map =
-    Item.c_to_string map
 
   let deep_copy (iter, plate) =
     let deep_copy_row row = Array.copy row in
