@@ -370,7 +370,6 @@ module Plate (Item : Item) : sig
   val to_string_array : p -> string array array
  (* exposed for tests only *)
   val fill_step : p -> int -> int -> Item.t -> int * Item.c_cnt
-  val get_max0  : Item.c_cnt -> (Item.t * int)
   val next_step_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
   val next_step_sums_sorted : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
   val get_stat  : p -> int -> int -> int * Item.c_cnt
@@ -396,42 +395,48 @@ end = struct
   let c_to_string map =
     Item.c_to_string map
 
-  let adj_cells_cur_row row x y =
-    let prev = F1.prev_cell row x in
-    let next = F1.next_cell row x in
-    [prev; next]
-  let adj_cells_adj_row in_row x y =
-    match in_row with
-      | F1.Norow -> []
-      | F1.Row row ->
-        let cur = F1.Cell row.(x) in
-        let add =
-          if (y mod 2) = 0 then F1.prev_cell row x
-          else F1.next_cell row x
-        in
-        [cur; add]
-
-  (* returns list of cells (and/or Nocell's) that are adjacent to (x,y) *)
-  let adj_list plate x y =
-    if y >= Array.length plate then []
-    else if y < 0 then []
-    else
-      let cur = adj_cells_cur_row plate.(y) x y in
-      let prev = adj_cells_adj_row (F1.prev_row plate y) x y in
-      let next = adj_cells_adj_row (F1.next_row plate y) x y in
-      prev @ cur @ next
-
-  let adj_random_select list =
-    let f = function
-      | F1.Nocell -> false
-      | F1.Cell _ -> true
-    in
-    let cleared = List.filter f list in
-    let len = List.length cleared in
-    let rand = Random.int len in
-    List.nth cleared rand
-
+  (* iterate over the plate in an attemt to increase size of same
+     color domains: using the ratio, assign a cell the same color as the
+     random adjacent cell. Ratio 0 - no color duplication, 100 -
+     always do duplication *)
   let rand_spread plate w h ratio =
+    let adj_cells_cur_row row x y =
+      let prev = F1.prev_cell row x in
+      let next = F1.next_cell row x in
+      [prev; next]
+    in
+    let adj_cells_adj_row in_row x y =
+      match in_row with
+        | F1.Norow -> []
+        | F1.Row row ->
+          let cur = F1.Cell row.(x) in
+          let add =
+            if (y mod 2) = 0 then F1.prev_cell row x
+            else F1.next_cell row x
+          in
+          [cur; add]
+    in
+    (* returns list of cells (and/or Nocell's) that are adjacent to (x,y) *)
+    let adj_list plate x y =
+      if y >= Array.length plate then []
+      else if y < 0 then []
+      else
+        let cur = adj_cells_cur_row plate.(y) x y in
+        let prev = adj_cells_adj_row (F1.prev_row plate y) x y in
+        let next = adj_cells_adj_row (F1.next_row plate y) x y in
+        prev @ cur @ next
+    in
+    (* choose random cell from the list of (adjacent) cells *)
+    let adj_random_select list =
+      let f = function
+        | F1.Nocell -> false
+        | F1.Cell _ -> true
+      in
+      let cleared = List.filter f list in
+      let len = List.length cleared in
+      let rand = Random.int len in
+      List.nth cleared rand
+    in
     let rec change_row_aux plt x y = match x with
       | -1 -> ()
       | _ ->
@@ -463,6 +468,7 @@ end = struct
     );
     plate
 
+  (* generate plate based on point size, width, height, domain ratio *)
   let gen psz w h ratio =
     let gen_line f psz len = Array.init len (fun _ -> f psz)
     in
@@ -491,6 +497,7 @@ end = struct
     let iter = -1 in
     (ref iter, plate)
 
+  (* make a deep copy of a plate *)
   let deep_copy (iter, plate) =
     let deep_copy_row row = Array.copy row in
     let new_plate_outer = Array.copy plate in
@@ -512,10 +519,8 @@ end = struct
     ) ENDIF;
     (res_cnt, res_c_stat)
 
-  let get_max0 stat = Item.get_max stat
   (* for every color in stat perform fill_step and count newly filled
      area. Then choose max of them *)
-
   let next_step_sums data x y stat =
     let f tmp_item =
       IFDEF DEBUG THEN (
@@ -534,6 +539,8 @@ end = struct
     let keys = Item.keys stat in
     List.map f keys
 
+  (* get the list of colors for the next step, sort them, choose
+     the max of them *)
   let next_step_sums_sorted data x y stat =
     let _print_list lst =
       let f (i, c) =
@@ -551,6 +558,7 @@ end = struct
     ) ENDIF;
     res
 
+  (* calculate filled area stats by filling it with unique item *)
   let get_stat data x y =
     let tmp_item = Item.create_uniq in
     let tmp_data = deep_copy data in
