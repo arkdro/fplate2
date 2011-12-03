@@ -62,32 +62,24 @@ module Fill (Item : Item) = struct
       ENDIF
 
   let prev_row plate y =
-    if y = 0 then
-      Norow
-    else (
-      print_row plate.(y-1);
-      Row plate.(y-1)
-    )
+    if y > 0 && y <= Array.length plate
+    then Row plate.(y-1)
+    else Norow
 
   let next_row plate y =
-    if y >= (Array.length plate)-1 then
-      Norow
-    else (
-      print_row plate.(y+1);
-      Row plate.(y+1)
-    )
+    if y >= -1 && y < (Array.length plate) - 1
+    then Row plate.(y+1)
+    else Norow
 
   let prev_cell row x =
-    if x = 0 then
-      Nocell
-    else
-      Cell row.(x-1)
+    if x > 0 && x <= Array.length row
+    then Cell row.(x-1)
+    else Nocell
 
   let next_cell row x =
-    if x >= (Array.length row)-1 then
-      Nocell
-    else
-      Cell row.(x+1)
+    if x >= -1 && x < (Array.length row) - 1
+    then Cell row.(x+1)
+    else Nocell
 
   let even y = (y mod 2) = 0
 
