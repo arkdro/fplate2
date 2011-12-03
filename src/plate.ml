@@ -27,6 +27,7 @@ module type Item = sig
   val keys              : c_cnt -> c_key list
 end
 (* ---------------------------------------------------------------------- *)
+(* flood fill *)
 module Fill (Item : Item) = struct
   type 'a row = Norow | Row of 'a
   type 'a cell = Nocell | Cell of 'a
@@ -67,6 +68,7 @@ module Fill (Item : Item) = struct
       print_row plate.(y-1);
       Row plate.(y-1)
     )
+
   let next_row plate y =
     if y >= (Array.length plate)-1 then
       Norow
@@ -74,22 +76,52 @@ module Fill (Item : Item) = struct
       print_row plate.(y+1);
       Row plate.(y+1)
     )
+
   let prev_cell row x =
     if x = 0 then
       Nocell
     else
       Cell row.(x-1)
+
   let next_cell row x =
     if x >= (Array.length row)-1 then
       Nocell
     else
       Cell row.(x+1)
+
+  let even y = (y mod 2) = 0
+
+  (* get two cells (and their coordinates) from a row above the current
+     row *)
+  let up_cells plate x y =
+    let x1, x2 =
+      if even y then
+        let x1 = x - 1 in
+        let x2 = x in
+        (x1, x2)
+      else
+        let x1 = x in
+        let x2 = x + 1 in
+        (x1, x2)
+    in
+    match prev_row plate y with
+      | Norow -> ((Nocell, x1, y-1), (Nocell, x2, y-1))
+      | Row row ->
+        let c1, c2 =
+          if even y then
+            prev_cell row x1, prev_cell row (x+1) (* prev, cur *)
+          else
+            prev_cell row (x+1), next_cell row x1 (* cur, next *)
+        in
+        ((c1, x1, y-1), (c2, x2, y-1))
+
   let rec find_leftmost row i data =
     match prev_cell row i with
       | Cell x when Item.cmp x data ->
         find_leftmost row (i-1) data
       | _ ->
         i
+
   let rec find_rightmost row i data =
     match next_cell row i with
       | Cell x when Item.cmp x data ->
@@ -362,13 +394,14 @@ module Fill (Item : Item) = struct
 
 end
 (* ---------------------------------------------------------------------- *)
+(* plate generation *)
 module Plate (Item : Item) : sig
   type p
   val gen : int -> int -> int -> int -> p
   val to_string : p -> string
   val c_to_string : Item.c_cnt -> string
   val to_string_array : p -> string array array
- (* exposed for tests only *)
+  (* exposed for tests only *)
   val fill_step : p -> int -> int -> Item.t -> int * Item.c_cnt
   val next_step_sums : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
   val next_step_sums_sorted : p -> int -> int -> Item.c_cnt -> (Item.c_key * int) list
@@ -468,8 +501,9 @@ end = struct
     );
     plate
 
-  (* generate plate based on point size, width, height, domain ratio *)
-  let gen psz w h ratio =
+  (* generate matrix based on cell create function, point size, width,
+     height *)
+  let gen_matrix f psz w h = 
     let gen_line f psz len = Array.init len (fun _ -> f psz)
     in
     let rec gen_matrix2 acc f psz w = function
@@ -477,10 +511,11 @@ end = struct
       | h -> let row = gen_line f psz w in
              gen_matrix2 (row::acc) f psz w (h-1)
     in
-    let gen_matrix f psz w h = 
-      let lst = gen_matrix2 [] f psz w h in
-      Array.of_list lst
-    in
+    let lst = gen_matrix2 [] f psz w h in
+    Array.of_list lst
+      
+  (* generate plate based on point size, width, height, domain ratio *)
+  let gen psz w h ratio =
     IFDEF DEBUG THEN (
       Printf.printf "plate gen: psz=%d, w=%d, h=%d, r=%d\n" psz w h ratio
     ) ENDIF;
@@ -563,6 +598,44 @@ end = struct
     let tmp_item = Item.create_uniq in
     let tmp_data = deep_copy data in
     F1.fill_step tmp_data x y tmp_item
+
+  (* connected components labeling *)
+  let label plate psz w h =
+    let assign_same_label labels (src_x, src_y) (dst_x, dst_y) =
+      let lab = labels.(src_y).(src_x) in
+      labels.(dst_y).(dst_x) <- lab
+    in
+    let check_2 plate labels x y pcell =
+      let (_up1, _up2) = F1.up_cells plate x y in
+      ()
+    in
+    let check_1 plate labels x y =
+      match F1.prev_cell plate.(y) x with
+        | F1.Cell cell when Item.cmp cell plate.(y).(x) ->
+          assign_same_label labels (x-1, y) (x, y)
+        | pcell ->
+          check_2 plate labels x y pcell
+    in
+    let iter_row plate labels row y =
+      let rec iter_row_aux plate labels row x y =
+        if x >= Array.length row then
+          check_1 plate labels x y
+        else (
+          iter_row_aux plate labels row (x+1) y
+        )
+      in
+      iter_row_aux plate labels row 0 y
+    in
+    let rec pass1 plate labels y =
+      if y >= Array.length plate then
+        labels
+      else (
+        iter_row plate labels plate.(y) y;
+        pass1 plate labels (y+1)
+      )
+    in
+    let (_, labels) = deep_copy (-1, plate) in
+    pass1 plate labels 0
 
 end
 (* ---------------------------------------------------------------------- *)
