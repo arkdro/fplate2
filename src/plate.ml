@@ -591,43 +591,5 @@ end = struct
     let tmp_data = deep_copy data in
     F1.fill_step tmp_data x y tmp_item
 
-  (* connected components labeling *)
-  let label plate psz w h =
-    let assign_same_label labels (src_x, src_y) (dst_x, dst_y) =
-      let lab = labels.(src_y).(src_x) in
-      labels.(dst_y).(dst_x) <- lab
-    in
-    let check_2 plate labels x y pcell =
-      let (_up1, _up2) = F1.up_cells plate x y in
-      ()
-    in
-    let check_1 plate labels x y =
-      match F1.prev_cell plate.(y) x with
-        | F1.Cell cell when Item.cmp cell plate.(y).(x) ->
-          assign_same_label labels (x-1, y) (x, y)
-        | pcell ->
-          check_2 plate labels x y pcell
-    in
-    let iter_row plate labels row y =
-      let rec iter_row_aux plate labels row x y =
-        if x >= Array.length row then
-          check_1 plate labels x y
-        else (
-          iter_row_aux plate labels row (x+1) y
-        )
-      in
-      iter_row_aux plate labels row 0 y
-    in
-    let rec pass1 plate labels y =
-      if y >= Array.length plate then
-        labels
-      else (
-        iter_row plate labels plate.(y) y;
-        pass1 plate labels (y+1)
-      )
-    in
-    let (_, labels) = deep_copy (-1, plate) in
-    pass1 plate labels 0
-
 end
 (* ---------------------------------------------------------------------- *)
