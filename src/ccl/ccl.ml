@@ -33,5 +33,24 @@ module type ItemSig = sig
 end
 (* ---------------------------------------------------------------------- *)
 module Ccl (Item : ItemSig) = struct
+  exception Row_length_mismatch
+  exception Column_length_mismatch
+  let init_ccl_matrix w h list =
+    let rec aux0 cnt acc_cells acc_rows = function
+      | head :: tail when cnt > 0 ->
+        aux0 (cnt-1) (head::acc_cells) acc_rows tail
+      | (_ :: _) as rest ->
+        if List.length acc_cells <> w
+        then raise Row_length_mismatch
+        else aux0 w [] (acc_cells::acc_rows) rest
+      | [] ->
+        let rows = acc_cells :: acc_rows in
+        if List.length rows <> h
+        then raise Column_length_mismatch
+        else List.map (fun row -> List.rev row) rows
+    in
+    let lst2 = aux0 w [] [] list in
+    let a1 = Array.of_list lst2 in
+    Array.map (fun row -> Array.of_list row) a1
 
 end
