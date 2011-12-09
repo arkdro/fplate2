@@ -33,8 +33,13 @@ module type ItemSig = sig
 end
 (* ---------------------------------------------------------------------- *)
 module Ccl (Item : ItemSig) = struct
+
   exception Row_length_mismatch
   exception Column_length_mismatch
+  type 'a row = Norow | Row of 'a
+  type 'a cell = Nocell | Cell of 'a
+
+  (* fill a 2d matrix with data from a flat list *)
   let init_ccl_matrix w h list =
     let rec aux0 cnt acc_cells acc_rows = function
       | head :: tail when cnt > 0 ->
@@ -53,4 +58,35 @@ module Ccl (Item : ItemSig) = struct
     let a1 = Array.of_list lst2 in
     Array.map (fun row -> Array.of_list row) a1
 
+  let prev_row plate y =
+    if y > 0 && y <= Array.length plate
+    then Row plate.(y-1)
+    else Norow
+
+  let next_row plate y =
+    if y >= -1 && y < (Array.length plate) - 1
+    then Row plate.(y+1)
+    else Norow
+
+  let prev_cell row x =
+    if x > 0 && x <= Array.length row
+    then Cell row.(x-1)
+    else Nocell
+
+  let next_cell row x =
+    if x >= -1 && x < (Array.length row) - 1
+    then Cell row.(x+1)
+    else Nocell
+
+  let adj_cells plate x y =
+    []
+
+  let labeling cell plate = ()
+
+
+  (* do a connected component labeling *)
+    let ccl avail_cells w h list =
+      let plate = init_ccl_matrix w h list in
+      let f cell = labeling plate cell in
+      List.map f avail_cells
 end
