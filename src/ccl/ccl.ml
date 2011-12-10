@@ -58,6 +58,8 @@ module Ccl (Item : ItemSig) = struct
     let a1 = Array.of_list lst2 in
     Array.map (fun row -> Array.of_list row) a1
 
+  let even x = (x mod 2) = 0
+
   let prev_row plate y =
     if y > 0 && y <= Array.length plate
     then Row plate.(y-1)
@@ -73,15 +75,53 @@ module Ccl (Item : ItemSig) = struct
     then Cell row.(x-1)
     else Nocell
 
+  let cur_cell row x =
+    if x >= 0 && x < Array.length row
+    then Cell row.(x)
+    else Nocell
+
   let next_cell row x =
     if x >= -1 && x < (Array.length row) - 1
     then Cell row.(x+1)
     else Nocell
 
-  let adj_cells plate x y =
-    []
+  (* returns cells and coordinates *)
+  let up_cells plate x y =
+    match prev_row plate y with
+      | Norow -> []
+      | Row row ->
+        if even y
+        then
+          (* x-1; x *)
+          [prev_cell row x, x-1, y; cur_cell row x, x, y]
+        else
+          (* x; x+1 *)
+          [cur_cell row x, x, y; next_cell row x, x+1, y]
 
-  let labeling cell plate = ()
+  let adj_cells plate x y =
+    let prev = prev_cell plate.(y) x, x-1, y in
+    let up = up_cells plate x y in
+    let all = prev :: up in
+    let f = function
+      | Cell _, _, _ -> true
+      | Nocell, _, _ -> false
+    in
+    let filled = List.filter f all in
+    let unpack = function
+      | Cell cell, x1, y1 -> cell, x1, y1
+      | _ -> assert false
+    in
+    List.map unpack filled
+
+  let adj_fg_cells plate x y =
+    let cell = plate.(y).(x) in
+    let all = adj_cells plate x y in
+    let f (c, cx, cy) = Item.cmp cell c in
+    List.filter f all
+
+  let labeling cell plate =
+    (* let adj = adj_fg_cells plate x y in *)
+    ()
 
 
   (* do a connected component labeling *)
