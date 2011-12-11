@@ -38,6 +38,8 @@ module Ccl (Item : ItemSig) = struct
   exception Column_length_mismatch
   type 'a row = Norow | Row of 'a
   type 'a cell = Nocell | Cell of 'a
+  type label = Empty | Label of int
+  type coord = Coord_wrong | Coord_ok of int * int
 
   (* fill a 2d matrix with data from a flat list *)
   let init_ccl_matrix w h list =
@@ -119,14 +121,78 @@ module Ccl (Item : ItemSig) = struct
     let f (c, cx, cy) = Item.cmp cell c in
     List.filter f all
 
-  let labeling cell plate =
-    (* let adj = adj_fg_cells plate x y in *)
-    ()
+  (* ccl for one particular cell (color) *)
+  let labeling cell plate w h =
+    let labels = Array.make_matrix w h Empty in
+    let classes = Array.init (w*h) (fun i -> i) in
+    let single = Array.make (w*h) true in
 
+    (* calculate coordinates of next cell *)
+    let next_coord x y =
+      if x >= w-1
+      then if y >= h-1
+        then Coord_wrong
+        else Coord_ok (0, y+1)
+      else Coord_ok (x+1, y)
+    in
+
+    let is_single = function
+      | Label label ->
+        let cls = classes.(label) in
+        single.(cls)
+      | _ -> assert false               (* should not happen *)
+    in
+
+    (* mark classes for equality *)
+    let mark_equiv list =
+      let single, not_single = List.partition is_single list in
+      let _martyrs, _survivor =
+        match not_single with
+          | [] ->
+            List.tl single, List.hd single
+          | h :: t ->
+            single @ t, h
+      in
+      ()
+    in
+
+    (* choose the label from a list, mark classes for equality *)
+    let choose_label = function
+      | (c, cx, cy) :: [] ->
+        (
+          match labels.(cy).(cx) with
+            | (Label l) as ll -> ll
+            | _ -> assert false
+        )
+      | list ->
+        let f (_c, cx, cy) = labels.(cy).(cx) in
+        let label_list = List.map f list in
+        mark_equiv label_list;
+        let aux lst = List.hd lst in  (* stub *)
+        let res_label = aux label_list in
+        res_label
+    in
+
+    (* pass 1 of ccl *)
+    let rec pass1 x y label_cnt =
+      match next_coord x y with
+        | Coord_wrong -> ()      (* pass 1 done *)
+        | Coord_ok (x2, y2) ->
+          match adj_fg_cells plate x y with
+            | [] ->
+              labels.(y).(x) <- Label label_cnt;
+              pass1 x2 y2 (label_cnt + 1)
+            | list ->
+              let adj_label = choose_label list in
+              labels.(y).(x) <- adj_label;
+              pass1 x2 y2 label_cnt
+    in
+    pass1 0 0 0
+    
 
   (* do a connected component labeling *)
     let ccl avail_cells w h list =
       let plate = init_ccl_matrix w h list in
-      let f cell = labeling plate cell in
+      let f cell = labeling plate cell w h in
       List.map f avail_cells
 end
