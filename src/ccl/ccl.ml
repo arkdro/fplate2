@@ -111,7 +111,7 @@ module Ccl (Item : ItemSig) = struct
     let filled = List.filter f all in
     let unpack = function
       | Cell cell, x1, y1 -> cell, x1, y1
-      | _ -> assert false
+      | _ -> assert false (* should not happen *)
     in
     List.map unpack filled
 
@@ -125,7 +125,7 @@ module Ccl (Item : ItemSig) = struct
   let labeling cell plate w h =
     let labels = Array.make_matrix w h Empty in
     let classes = Array.init (w*h) (fun i -> i) in
-    let single = Array.make (w*h) true in
+    let single_flags = Array.make (w*h) true in
 
     (* calculate coordinates of next cell *)
     let next_coord x y =
@@ -139,35 +139,76 @@ module Ccl (Item : ItemSig) = struct
     let is_single = function
       | Label label ->
         let cls = classes.(label) in
-        single.(cls)
+        single_flags.(cls)
       | _ -> assert false               (* should not happen *)
     in
 
-    (* mark classes for equality *)
-    let mark_equiv list =
+    let unpack_label = function
+      | Label x -> x
+      | _ -> assert false               (* should not happen *)
+    in
+
+    (* mark classes for equality. Input: cnt, [label] *)
+    let mark_equiv label_cnt list =
+      let martyr surv_class m =
+        let idx = unpack_label m in
+        classes.(idx) <- surv_class
+      in
+
+      (* mark martyrs with single item in class array *)
+      let mark_s surv_class martyrs =
+        List.iter (martyr surv_class) martyrs
+      in
+
+      (* run over class array and assign a survivor class to items
+         that have class equal to the current martyr class *)
+      let merging_classes surv_class martyr =
+        let m_idx = unpack_label martyr in
+        let m_class = classes.(m_idx) in
+        let rec aux_merg = function
+          | cnt when cnt = label_cnt ->
+            ()
+          | cnt when classes.(cnt) = m_class ->
+            classes.(cnt) <- surv_class;
+            aux_merg (cnt+1)
+          | cnt ->
+            aux_merg (cnt+1)
+        in
+        aux_merg 0
+      in
+
+      (* mark martyrs with several items in class array *)
+      let mark_m surv_class martyrs =
+        List.iter (merging_classes surv_class) martyrs
+      in
+
       let single, not_single = List.partition is_single list in
-      let _martyrs, _survivor =
+      let martyrs_s, martyrs_m, survivor =
         match not_single with
           | [] ->
-            List.tl single, List.hd single
+            List.tl single, [], List.hd single
           | h :: t ->
-            single @ t, h
+            single, t, h
       in
-      ()
+      let surv_label = unpack_label survivor in
+      let surv_class = classes.(surv_label) in
+      single_flags.(surv_class) <- false;
+      mark_s surv_class martyrs_s;
+      mark_m surv_class martyrs_m
     in
 
     (* choose the label from a list, mark classes for equality *)
-    let choose_label = function
+    let choose_label label_cnt = function
       | (c, cx, cy) :: [] ->
         (
           match labels.(cy).(cx) with
             | (Label l) as ll -> ll
-            | _ -> assert false
+            | _ -> assert false (* should not happen *)
         )
       | list ->
         let f (_c, cx, cy) = labels.(cy).(cx) in
         let label_list = List.map f list in
-        mark_equiv label_list;
+        mark_equiv label_cnt label_list;
         let aux lst = List.hd lst in  (* stub *)
         let res_label = aux label_list in
         res_label
@@ -183,7 +224,7 @@ module Ccl (Item : ItemSig) = struct
               labels.(y).(x) <- Label label_cnt;
               pass1 x2 y2 (label_cnt + 1)
             | list ->
-              let adj_label = choose_label list in
+              let adj_label = choose_label label_cnt list in
               labels.(y).(x) <- adj_label;
               pass1 x2 y2 label_cnt
     in
