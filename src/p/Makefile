@@ -1,4 +1,9 @@
-OC = ocamlc
+OCC = ocamlc
+OCI = ocamlc
+OCL = ocamlc
+OCCFLAGS = -c -annot
+OCIFLAGS = -i -annot
+OCLFLAGS = -a -annot
 PIQI_PATH = $(HOME)/util/ocaml/dist/bin
 PIQI_LIB_PATH = $(HOME)/util/ocaml/dist/piqi
 PIQI_LIB = piqirun.cma
@@ -22,7 +27,7 @@ OBJ_FILES = $(patsubst %.ml, %.cmo, $(ML_FILES))
 CMI_FILES = $(patsubst %.ml, %.cmi, $(ML_FILES))
 
 $(PROG): $(OBJ_FILES)
-	$(OC) -I $(PIQI_LIB_PATH) $(PIQI_LIB) -a -o $(PROG) $(OBJ_FILES)
+	$(OCL) $(OCLFLAGS) -I $(PIQI_LIB_PATH) $(PIQI_LIB) -o $(PROG) $(OBJ_FILES)
 
 all: $(PROG)
 
@@ -35,14 +40,14 @@ $(PIQI_ML_FILES): $(PIQI_FILES)
 $(OBJ_FILES): $(ML_FILES)
 	set -e; \
 	for i in $^ ; do \
-		$(OC) -I $(PIQI_LIB_PATH) -c $$i \
+		$(OCC) $(OCCFLAGS) -I $(PIQI_LIB_PATH) $$i \
 		; \
 	done
 
 mli: $(ML_FILES)
 	@set -e; \
 	for i in $^ ; do \
-		$(OC) -I $(PIQI_LIB_PATH) -i $$i \
+		$(OCI) $(OCIFLAGS) -I $(PIQI_LIB_PATH) $$i \
 		; \
 	done
 
