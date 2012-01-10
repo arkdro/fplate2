@@ -155,13 +155,13 @@ module Ccl (Item : ItemSig) = struct
         classes.(idx) <- surv_class
       in
 
-      (* mark martyrs with single item in class array *)
+      (* mark martyrs with a single item in class array *)
       let mark_s surv_class martyrs =
         List.iter (martyr surv_class) martyrs
       in
 
-      (* run over class array and assign a survivor class to items
-         that have class equal to the current martyr class *)
+      (* run over the class array and assign a survivor class to items
+         that have a class equal to the current martyr class *)
       let merging_classes surv_class martyr =
         let m_idx = unpack_label martyr in
         let m_class = classes.(m_idx) in
@@ -177,7 +177,7 @@ module Ccl (Item : ItemSig) = struct
         aux_merg 0
       in
 
-      (* mark martyrs with several items in class array *)
+      (* mark martyrs with several items in the class array *)
       let mark_m surv_class martyrs =
         List.iter (merging_classes surv_class) martyrs
       in
