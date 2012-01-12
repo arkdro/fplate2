@@ -115,8 +115,8 @@ module Ccl (Item : ItemSig) = struct
     in
     List.map unpack filled
 
-  let adj_fg_cells plate x y =
-    let cell = plate.(y).(x) in
+  (* for the given cell get adjacent cells with the same color *)
+  let adj_fg_cells plate x y cell =
     let all = adj_cells plate x y in
     let f (c, cx, cy) = Item.cmp cell c in
     List.filter f all
@@ -224,7 +224,7 @@ module Ccl (Item : ItemSig) = struct
       match next_coord x y with
         | Coord_wrong -> ()      (* pass 1 done *)
         | Coord_ok (x2, y2) ->
-          match adj_fg_cells plate x y with
+          match adj_fg_cells plate x y cell with
             | [] ->                     (* new label *)
               labels.(y).(x) <- Label label_cnt;
               pass1 x2 y2 (label_cnt + 1)
@@ -239,6 +239,6 @@ module Ccl (Item : ItemSig) = struct
   (* do a connected component labeling *)
     let ccl avail_cells w h list =
       let plate = init_ccl_matrix w h list in
-      let f cell = labeling plate cell w h in
+      let f cell = labeling cell plate w h in
       List.map f avail_cells
 end
