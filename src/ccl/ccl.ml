@@ -1,7 +1,7 @@
 (* connected component labeling
-   based on (iciap99lu.pdf)
-   "A simple and efficient connected component labeling algorithm"
-   by Luidgi Di Stefano, Andrea Bulgarelli
+ * based on (iciap99lu.pdf)
+ * "A simple and efficient connected component labeling algorithm"
+ * by Luidgi Di Stefano, Andrea Bulgarelli
  *)
 (* ---------------------------------------------------------------------- *)
 module type ItemSig = sig
@@ -121,13 +121,15 @@ module Ccl (Item : ItemSig) = struct
     let f (c, cx, cy) = Item.cmp cell c in
     List.filter f all
 
+  (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* ccl for one particular cell (color) *)
   let labeling cell plate w h =
     let labels = Array.make_matrix w h Empty in
     let classes = Array.init (w*h) (fun i -> i) in
     let single_flags = Array.make (w*h) true in
 
-    (* calculate coordinates of next cell *)
+    (* calculate coordinates of next cell, moving to the next row
+       if necessary *)
     let next_coord x y =
       if x >= w-1
       then if y >= h-1
@@ -136,6 +138,7 @@ module Ccl (Item : ItemSig) = struct
       else Coord_ok (x+1, y)
     in
 
+    (* whether class for the given label contains only one label or more *)
     let is_single = function
       | Label label ->
         let cls = classes.(label) in
@@ -148,6 +151,7 @@ module Ccl (Item : ItemSig) = struct
       | _ -> assert false               (* should not happen *)
     in
 
+    (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
     (* mark classes for equality. Input: cnt, [label] *)
     let mark_equiv label_cnt list =
       let martyr surv_class m =
@@ -195,6 +199,7 @@ module Ccl (Item : ItemSig) = struct
       single_flags.(surv_class) <- false;
       mark_s surv_class martyrs_s;
       mark_m surv_class martyrs_m
+    (* - - - mark_equiv - - - - - - - - - - - - - - - - - - - - -*)
     in
 
     (* choose the label from a list, mark classes for equality *)
@@ -220,16 +225,16 @@ module Ccl (Item : ItemSig) = struct
         | Coord_wrong -> ()      (* pass 1 done *)
         | Coord_ok (x2, y2) ->
           match adj_fg_cells plate x y with
-            | [] ->
+            | [] ->                     (* new label *)
               labels.(y).(x) <- Label label_cnt;
               pass1 x2 y2 (label_cnt + 1)
-            | list ->
+            | list ->                   (* existing labels *)
               let adj_label = choose_label label_cnt list in
               labels.(y).(x) <- adj_label;
               pass1 x2 y2 label_cnt
     in
     pass1 0 0 0
-    
+  (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
 
   (* do a connected component labeling *)
     let ccl avail_cells w h list =
