@@ -41,6 +41,57 @@ module Ccl (Item : ItemSig) = struct
   type label = Empty | Label of int
   type coord = Coord_wrong | Coord_ok of int * int
 
+  let dump_last_label = function
+    | None -> ()
+    | Some cnt -> Printf.printf "label cnt: %d\n" cnt
+
+  let dump_cell = function
+    | None -> ()
+    | Some cell -> Printf.printf "cell: %s\n" (Item.to_string cell)
+
+  let dump_sflags w h = function
+    | None -> ()
+    | Some flags ->
+      let bstr = function
+        | true -> "t"
+        | false -> "f"
+      in
+      let f (str, i) x =
+        let sep =
+          if ((i+1) mod w) = 0 && i > 0
+          then "\n"
+          else " "
+        in (str ^ bstr x ^ sep, i + 1)
+      in
+      let (res_str, _) = Array.fold_left f ("", 0) flags in
+      Printf.printf "single flags:\n%s\n" res_str
+
+  let dump_classes w h = function
+    | None -> ()
+    | Some classes ->
+      let cstr c = Printf.sprintf "%3d" c
+      in
+      let f (str, i) x =
+        let sep =
+          if ((i+1) mod w) = 0 && i > 0
+          then "\n"
+          else " "
+        in (str ^ cstr x ^ sep, i + 1)
+      in
+      let (res_str, _) = Array.fold_left f ("", 0) classes in
+      Printf.printf "classes:\n%s\n" res_str
+
+  let dump_labels labels =
+    ()
+
+  let dump_all ?(labels = None) ?(classes = None)
+      ?(flags = None) ?(cell = None) ?(cnt = None) w h =
+    dump_labels labels;
+    dump_classes w h classes;
+    dump_sflags w h flags;
+    dump_cell cell;
+    dump_last_label cnt
+
   (* fill a 2d matrix with data from a flat list *)
   let init_ccl_matrix w h list =
     let rec aux0 cnt acc_cells acc_rows = function
@@ -222,7 +273,7 @@ module Ccl (Item : ItemSig) = struct
     (* pass 1 of ccl *)
     let rec pass1 x y label_cnt =
       match next_coord x y with
-        | Coord_wrong -> ()      (* pass 1 done *)
+        | Coord_wrong -> label_cnt      (* pass 1 done *)
         | Coord_ok (x2, y2) ->
           match adj_fg_cells plate x y cell with
             | [] ->                     (* new label *)
@@ -233,7 +284,10 @@ module Ccl (Item : ItemSig) = struct
               labels.(y).(x) <- adj_label;
               pass1 x2 y2 label_cnt
     in
-    pass1 0 0 0
+    let label_cnt = pass1 0 0 0 in
+    dump_all ~labels:(Some labels) ~classes:(Some classes)
+      ~flags:(Some single_flags) ~cell:(Some cell)
+      ~cnt:(Some label_cnt) w h
   (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
 
   (* do a connected component labeling *)
