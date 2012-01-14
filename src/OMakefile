@@ -134,12 +134,14 @@ OCAMLPACKS[] =
 #    exit 1
 
 PIQI_LIB_PATH = p
-PIQI_LIB = piqirun.cma
+#PIQI_LIB = piqirun.cma
 PLATE_LIB = plate_piqi
+CCL_LIB_PATH = ccl
+CCL_LIB = libccl
 #
 # Include path
 #
-OCAMLINCLUDES += $(PIQI_LIB_PATH)
+OCAMLINCLUDES += $(PIQI_LIB_PATH) $(CCL_LIB_PATH)
 
 #
 # Compile native or byte code? 
@@ -186,6 +188,7 @@ OCAMLOPTFLAGS += -annot
 #
 
 FILES[] =
+	ccl_test
 	plate
 	plate_test
 	point2
@@ -197,7 +200,7 @@ PROGRAM = rpl
 # OCAML_LIBS +=
 # OCAML_CLIBS +=
 OCAML_OTHER_LIBS += unix
-OCAML_OTHER_LIBS += $(PLATE_LIB)
+OCAML_OTHER_LIBS += $(PLATE_LIB) $(CCL_LIB)
 # OCAML_LIB_FLAGS +=
 #
 
@@ -205,7 +208,7 @@ OCamlProgram ($(PROGRAM), $(FILES))
 .DEFAULT: $(PROGRAM)
 
 clean:
-	rm -f *.o *.cm[aiox] $(PROGRAM).run $(PROGRAM).opt $(PROGRAM)
+	rm -f *.o *.cm[aiox] $(PROGRAM).run $(PROGRAM).opt $(PROGRAM) *.annot
 
 distclean: clean
 	rm -f *.?~ *.??~ *.???~

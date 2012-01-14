@@ -199,7 +199,7 @@ OCAML_OTHER_LIBS += unix
 .DEFAULT: $(OCamlLibrary $(LIB), $(FILES))
 
 clean:
-	rm -f *.o *.cm[aiox] $(LIB)
+	rm -f *.o *.cm[aiox] $(LIB) *.annot
 
 distclean: clean
 	rm -f *.?~ *.??~ *.???~

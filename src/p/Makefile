@@ -52,7 +52,7 @@ mli: $(ML_FILES)
 	done
 
 clean:
-	rm -f -- *.tmp.ml *.cmx *.cma *.o $(OBJ_FILES) $(CMI_FILES)
+	rm -f -- *.tmp.ml *.cmx *.cma *.o $(OBJ_FILES) $(CMI_FILES) *.annot
 
 distclean: clean
 	rm -f -- $(PIQI_ML_FILES) $(PIQI_ML_EXT_FILES)
