@@ -83,12 +83,29 @@ module Ccl (Item : ItemSig) = struct
       let (res_str, _) = Array.fold_left f ("", 0) classes in
       Printf.printf "classes:\n%s\n" res_str
 
-  let dump_labels labels =
-    ()
+  let dump_labels w h = function
+    | None -> ()
+    | Some l ->
+      let pwidth = String.length (string_of_int (w * h)) in
+      let str_one_label = function
+        | Empty ->
+          Printf.sprintf "%*s" pwidth "_"
+        | Label x ->
+          Printf.sprintf "%*d" pwidth x
+      in
+      let str_row row =
+        let l_list = Array.to_list row in
+        let str_list = List.map str_one_label l_list in
+        String.concat " " str_list
+      in
+      let rows = Array.to_list l in
+      let rows_str = List.map str_row rows in
+      let res_str = String.concat "\n" rows_str in
+      Printf.printf "labels:\n%s\n" res_str
 
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
-    dump_labels labels;
+    dump_labels w h labels;
     dump_classes w h classes;
     dump_sflags w h flags;
     dump_cell cell;
