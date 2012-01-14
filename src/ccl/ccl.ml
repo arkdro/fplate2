@@ -83,8 +83,8 @@ module Ccl (Item : ItemSig) = struct
       let (res_str, _) = Array.fold_left f ("", 0) classes in
       Printf.printf "classes:\n%s\n" res_str
 
-  let dump_labels w h = function
-    | None -> ()
+  let string_of_labels w h = function
+    | None -> ""
     | Some l ->
       let pwidth = String.length (string_of_int (w * h)) in
       let str_one_label = function
@@ -100,8 +100,11 @@ module Ccl (Item : ItemSig) = struct
       in
       let rows = Array.to_list l in
       let rows_str = List.map str_row rows in
-      let res_str = String.concat "\n" rows_str in
-      Printf.printf "labels:\n%s\n" res_str
+      String.concat "\n" rows_str
+
+  let dump_labels w h l =
+    let res = string_of_labels w h l in
+    Printf.printf "labels:\n%s\n" res
 
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
