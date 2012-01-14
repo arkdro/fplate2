@@ -83,27 +83,29 @@ module Ccl (Item : ItemSig) = struct
       let (res_str, _) = Array.fold_left f ("", 0) classes in
       Printf.printf "classes:\n%s\n" res_str
 
-  let string_of_labels w h = function
-    | None -> ""
-    | Some l ->
-      let pwidth = String.length (string_of_int (w * h)) in
-      let str_one_label = function
-        | Empty ->
-          Printf.sprintf "%*s" pwidth "_"
-        | Label x ->
-          Printf.sprintf "%*d" pwidth x
-      in
-      let str_row row =
-        let l_list = Array.to_list row in
-        let str_list = List.map str_one_label l_list in
-        String.concat " " str_list
-      in
-      let rows = Array.to_list l in
-      let rows_str = List.map str_row rows in
-      String.concat "\n" rows_str
+  let string_of_labels w h l =
+    let pwidth = String.length (string_of_int (w * h)) in
+    let str_one_label = function
+      | Empty ->
+        Printf.sprintf "%*s" pwidth "_"
+      | Label x ->
+        Printf.sprintf "%*d" pwidth x
+    in
+    let str_row row =
+      let l_list = Array.to_list row in
+      let str_list = List.map str_one_label l_list in
+      String.concat " " str_list
+    in
+    let rows = Array.to_list l in
+    let rows_str = List.map str_row rows in
+    String.concat "\n" rows_str
 
-  let dump_labels w h l =
-    let res = string_of_labels w h l in
+  let dump_labels w h labels =
+    let res = match labels with
+      | None -> ""
+      | Some l ->
+        string_of_labels w h l
+    in
     Printf.printf "labels:\n%s\n" res
 
   let dump_all ?(labels = None) ?(classes = None)
