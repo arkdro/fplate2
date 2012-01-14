@@ -58,7 +58,7 @@ module rec Point : PointSig = struct
     let rec all_aux lst = function
       | -1 -> lst
       | x ->
-        {color = x; pushed = false; iter = -1} :: lst
+        all_aux ({color = x; pushed = false; iter = -1} :: lst) (x-1)
     in all_aux [] (psz-1)
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* this part must be a separate functor *)
