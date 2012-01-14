@@ -389,7 +389,9 @@ end
 (* plate generation *)
 module Plate (Item : Item) : sig
   type p
+  type a
   val gen : int -> int -> int -> int -> p
+  val get_data_list : p -> Item.t list
   val to_string : p -> string
   val c_to_string : Item.c_cnt -> string
   val to_string_array : p -> string array array
@@ -523,6 +525,13 @@ end = struct
     ) ENDIF;
     let iter = -1 in
     (ref iter, plate)
+
+  (* extract pure plate data and make it a list. Used in Ccl_test *)
+  let get_data_list (_, plate) =
+    let row_lst row = Array.to_list row in
+    let lst = Array.to_list plate in
+    let lst2 = List.map row_lst lst in
+    List.flatten lst2
 
   (* make a deep copy of a plate *)
   let deep_copy (iter, plate) =
