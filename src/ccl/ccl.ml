@@ -143,11 +143,11 @@ module Ccl (Item : ItemSig) = struct
 
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
+    dump_cell cell;
+    dump_last_label cnt;
     dump_labels w h labels;
     dump_classes w h classes;
-    dump_sflags w h flags;
-    dump_cell cell;
-    dump_last_label cnt
+    dump_sflags w h flags
 
   (* fill a 2d matrix with data from a flat list *)
   let init_ccl_matrix w h list =
