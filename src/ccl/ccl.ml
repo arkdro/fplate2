@@ -72,22 +72,28 @@ module Ccl (Item : ItemSig) = struct
     in
     Printf.printf "single flags:\n%s\n" res
 
-  let dump_classes w h = function
-    | None -> ()
-    | Some classes ->
-      let cstr c =
-        let pwidth = String.length (string_of_int (w * h)) in
-        Printf.sprintf "%*d" pwidth c
-      in
-      let f (str, i) x =
-        let sep =
-          if ((i+1) mod w) = 0 && i > 0
-          then "\n"
-          else " "
-        in (str ^ cstr x ^ sep, i + 1)
-      in
-      let (res_str, _) = Array.fold_left f ("", 0) classes in
-      Printf.printf "classes:\n%s\n" res_str
+  let string_of_classes w h classes =
+    let cstr c =
+      let pwidth = String.length (string_of_int (w * h)) in
+      Printf.sprintf "%*d" pwidth c
+    in
+    let f (str, i) x =
+      let sep =
+        if ((i+1) mod w) = 0 && i > 0
+        then "\n"
+        else " "
+      in (str ^ cstr x ^ sep, i + 1)
+    in
+    let (res_str, _) = Array.fold_left f ("", 0) classes in
+    res_str
+
+  let dump_classes w h c =
+    let res = match c with
+      | None -> ""
+      | Some classes ->
+        string_of_classes w h classes
+    in
+    Printf.printf "classes:\n%s\n" res
 
   let string_of_labels w h l =
     let pwidth = String.length (string_of_int (w * h)) in
