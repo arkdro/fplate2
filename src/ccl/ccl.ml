@@ -49,9 +49,7 @@ module Ccl (Item : ItemSig) = struct
     | None -> ()
     | Some cell -> Printf.printf "cell: %s\n" (Item.to_string cell)
 
-  let dump_sflags w h = function
-    | None -> ()
-    | Some flags ->
+  let string_of_sflags w h flags =
       let bstr = function
         | true -> "t"
         | false -> "f"
@@ -64,7 +62,15 @@ module Ccl (Item : ItemSig) = struct
         in (str ^ bstr x ^ sep, i + 1)
       in
       let (res_str, _) = Array.fold_left f ("", 0) flags in
-      Printf.printf "single flags:\n%s\n" res_str
+      res_str
+
+  let dump_sflags w h f =
+    let res = match f with
+      | None -> ""
+      | Some flags ->
+        string_of_sflags w h flags
+    in
+    Printf.printf "single flags:\n%s\n" res
 
   let dump_classes w h = function
     | None -> ()
