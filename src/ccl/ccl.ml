@@ -120,6 +120,27 @@ module Ccl (Item : ItemSig) = struct
     in
     Printf.printf "labels:\n%s\n" res
 
+  let string_of_one_ccl w h data =
+    let pwidth = String.length (string_of_int (w * h)) in
+    let str_one_cell = function
+      | None ->
+        Printf.sprintf "%*s" pwidth "_"
+      | Some x -> 
+        Printf.sprintf "%*d" pwidth x
+    in
+    let str_row row =
+      let row_list = Array.to_list row in
+      let str_list = List.map str_one_cell row_list in
+      String.concat " " str_list
+    in
+    let rows = Array.to_list data in
+    let rows_str = List.map str_row rows in
+    String.concat "\n" rows_str
+
+  let dump_one_ccl w h data =
+    let res = string_of_one_ccl w h data in
+    Printf.printf "labels:\n%s\n" res
+
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
     dump_labels w h labels;
@@ -336,7 +357,9 @@ module Ccl (Item : ItemSig) = struct
       done;
       res
     in
-    pass2
+    let res = pass2 in
+    dump_one_ccl w h res;
+    res
 
   (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
 
