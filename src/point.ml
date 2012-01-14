@@ -12,6 +12,7 @@ module type PointSig = sig
   val copy_iter: t -> t -> t
   val add_iter: t -> t
   val clean     : t -> t
+  val all       : int -> t list
 
   type c_cnt
   type c_key = t
@@ -53,6 +54,12 @@ module rec Point : PointSig = struct
   let copy_iter src dest = {dest with iter = src.iter}
   let add_iter p = {p with iter = p.iter+1}
   let create_uniq = {color = -1; pushed = false; iter = -1}
+  let all psz =
+    let rec all_aux lst = function
+      | -1 -> lst
+      | x ->
+        {color = x; pushed = false; iter = -1} :: lst
+    in all_aux [] (psz-1)
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* this part must be a separate functor *)
   (* work with map: color -> amount *)
