@@ -323,7 +323,21 @@ module Ccl (Item : ItemSig) = struct
     let label_cnt = pass1 0 0 0 in
     dump_all ~labels:(Some labels) ~classes:(Some classes)
       ~flags:(Some single_flags) ~cell:(Some cell)
-      ~cnt:(Some label_cnt) w h
+      ~cnt:(Some label_cnt) w h;
+    let pass2 =
+      let res = Array.make_matrix w h None in
+      for y = 0 to h-1 do
+        for x = 0 to w-1 do
+          match labels.(y).(x) with
+            | Empty -> ()
+            | Label cur_label ->
+              res.(y).(x) <- Some classes.(cur_label)
+        done
+      done;
+      res
+    in
+    pass2
+
   (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
 
   (* do a connected component labeling *)
