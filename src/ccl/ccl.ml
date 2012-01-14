@@ -69,7 +69,9 @@ module Ccl (Item : ItemSig) = struct
   let dump_classes w h = function
     | None -> ()
     | Some classes ->
-      let cstr c = Printf.sprintf "%3d" c
+      let cstr c =
+        let pwidth = String.length (string_of_int (w * h)) in
+        Printf.sprintf "%*d" pwidth c
       in
       let f (str, i) x =
         let sep =
