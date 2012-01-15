@@ -183,7 +183,9 @@ module Ccl (Item : ItemSig) = struct
         let rows = acc_cells :: acc_rows in
         if List.length rows <> h
         then raise Column_length_mismatch
-        else List.map (fun row -> List.rev row) rows
+        else
+          let rv1 = List.map (fun row -> List.rev row) rows in
+          List.rev rv1
     in
     let lst2 = aux0 w [] [] list in
     let a1 = Array.of_list lst2 in
