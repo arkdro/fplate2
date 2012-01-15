@@ -393,6 +393,7 @@ module Plate (Item : Item) : sig
   val gen : int -> int -> int -> int -> p
   val get_data_list : p -> Item.t list
   val to_string : p -> string
+  val to_string2: int -> int -> p -> string
   val c_to_string : Item.c_cnt -> string
   val to_string_array : p -> string array array
   (* exposed for tests only *)
@@ -419,6 +420,22 @@ end = struct
     let a1 = Array.map row_to_string p in
     let lst = Array.to_list a1 in
     (String.concat "\n" lst) ^ "\n"
+
+  let to_string2 w h (_, p) =
+    let ys = ref [] in
+    for y = 0 to h-1 do
+      let xs = ref [] in
+      for x = 0 to w-1 do
+        let str = Item.to_string p.(y).(x) in
+        let str2 = Printf.sprintf "x=%d, y=%d, c: %s" x y str in
+        xs := !xs @ [str2]
+      done;
+      let xstr = String.concat ";" !xs in
+      ys := !ys @ [xstr]
+    done;
+    let ystr = String.concat "\n" !ys in
+    ystr
+
   let c_to_string map =
     Item.c_to_string map
 
