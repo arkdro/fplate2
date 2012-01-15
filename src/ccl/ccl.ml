@@ -49,6 +49,12 @@ module Ccl (Item : ItemSig) = struct
     | None -> ()
     | Some cell -> Printf.printf "cell: %s\n" (Item.to_string cell)
 
+  let dump_cell2 = function
+        | (Nocell, x, y) ->
+          Printf.printf "%d, %d, no cell\n" x y
+        | (Cell c, x, y) ->
+          Printf.printf "%d, %d, %s\n" x y (Item.to_string c)
+
   let string_of_sflags w h flags =
       let bstr = function
         | true -> "t"
@@ -120,6 +126,21 @@ module Ccl (Item : ItemSig) = struct
     in
     Printf.printf "labels:\n%s\n" res
 
+  let string_of_label_list list =
+    let str_list =
+      List.map (
+        function x -> match x with
+          | Empty ->
+            Printf.sprintf "_"
+          | Label l ->
+            Printf.sprintf "%d" l
+      ) list
+    in
+    String.concat " " str_list
+
+  let dump_label_list list =
+    Printf.printf "%s\n" (string_of_label_list list)
+
   let string_of_one_ccl w h data =
     let pwidth = String.length (string_of_int (w * h)) in
     let str_one_cell = function
@@ -139,7 +160,7 @@ module Ccl (Item : ItemSig) = struct
 
   let dump_one_ccl w h data =
     let res = string_of_one_ccl w h data in
-    Printf.printf "labels:\n%s\n" res
+    Printf.printf "dump_one_ccl, labels:\n%s\n" res
 
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
@@ -203,14 +224,22 @@ module Ccl (Item : ItemSig) = struct
         if even y
         then
           (* x-1; x *)
-          [prev_cell row x, x-1, y; cur_cell row x, x, y]
+          [prev_cell row x, x-1, y-1; cur_cell row x, x, y-1] (* FIXME:
+                                                                 y or y-1 *)
         else
           (* x; x+1 *)
-          [cur_cell row x, x, y; next_cell row x, x+1, y]
+          [cur_cell row x, x, y-1; next_cell row x, x+1, y-1]
 
   let adj_cells plate x y =
     let prev = prev_cell plate.(y) x, x-1, y in
     let up = up_cells plate x y in
+    IFDEF DEBUG THEN (
+      Printf.printf "adj: %d, %d\nprev: " x y;
+      dump_cell2 prev;
+      Printf.printf "adj, up:\n";
+      List.iter dump_cell2 up;
+      Printf.printf "adj end\n"
+    ) ENDIF;
     let all = prev :: up in
     let f = function
       | Cell _, _, _ -> true
@@ -226,13 +255,21 @@ module Ccl (Item : ItemSig) = struct
   (* for the given cell get adjacent cells with the same color *)
   let adj_fg_cells plate x y cell =
     let all = adj_cells plate x y in
-    let f (c, cx, cy) = Item.cmp cell c in
+    let f (c, cx, cy) =
+      let res = Item.cmp cell c in
+      IFDEF DEBUG THEN (
+        Printf.printf
+          "adj_fg_cells: %B, x=%d, y=%d\ncurr cell: %s\nbase cell: %s\n"
+          res cx cy (Item.to_string c) (Item.to_string cell)
+      ) ENDIF;
+      res
+    in
     List.filter f all
 
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* ccl for one particular cell (color) *)
   let labeling cell plate w h =
-    let labels = Array.make_matrix w h Empty in
+    let labels = Array.make_matrix h w Empty in
     let classes = Array.init (w*h) (fun i -> i) in
     let single_flags = Array.make (w*h) true in
 
@@ -245,6 +282,9 @@ module Ccl (Item : ItemSig) = struct
         else Coord_ok (0, y+1)
       else Coord_ok (x+1, y)
     in
+
+    (* whether the current cell has the same color as a base cell *)
+    let is_fg_cell plate x y cell = Item.cmp cell plate.(y).(x) in
 
     (* whether class for the given label contains only one label or more *)
     let is_single = function
@@ -262,6 +302,13 @@ module Ccl (Item : ItemSig) = struct
     (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
     (* mark classes for equality. Input: cnt, [label] *)
     let mark_equiv label_cnt list =
+      IFDEF DEBUG THEN (
+        Printf.printf "mark_equiv: %d\n" label_cnt;
+        Printf.printf "mark_equiv list:\n";
+        dump_label_list list;
+        Printf.printf "mark_equiv labels:\n";
+        dump_labels w h (Some labels)
+      ) ENDIF;
       let martyr surv_class m =
         let idx = unpack_label m in
         classes.(idx) <- surv_class
@@ -277,8 +324,20 @@ module Ccl (Item : ItemSig) = struct
       let merging_classes surv_class martyr =
         let m_idx = unpack_label martyr in
         let m_class = classes.(m_idx) in
+        IFDEF DEBUG THEN (
+          Printf.printf "merging_classes: surv cls: %d, mrt l: %d, mrt c: %d\n"
+            surv_class m_idx m_class;
+          dump_labels w h (Some labels);
+          dump_classes w h (Some classes)
+        ) ENDIF;
         let rec aux_merg = function
           | cnt when cnt = label_cnt ->
+            IFDEF DEBUG THEN (
+              Printf.printf "merging_classes: surv cls: %d, mrt l: %d, mrt c: %d\n"
+                surv_class m_idx m_class;
+              dump_labels w h (Some labels);
+              dump_classes w h (Some classes)
+            ) ENDIF;
             ()
           | cnt when classes.(cnt) = m_class ->
             classes.(cnt) <- surv_class;
@@ -314,13 +373,26 @@ module Ccl (Item : ItemSig) = struct
     let choose_label label_cnt = function
       | (c, cx, cy) :: [] ->
         (
+          IFDEF DEBUG THEN (
+            Printf.printf "choose_label, one: %d, %d\n" cx cy;
+            dump_labels w h (Some labels)
+          ) ENDIF;
           match labels.(cy).(cx) with
             | (Label l) as ll -> ll
             | _ -> assert false (* should not happen *)
         )
       | list ->
-        let f (_c, cx, cy) = labels.(cy).(cx) in
+        let f (_c, cx, cy) =
+          IFDEF DEBUG THEN (
+            Printf.printf "choose_label, f: %d, %d\n" cx cy;
+          ) ENDIF;
+          labels.(cy).(cx)
+        in
         let label_list = List.map f list in
+        IFDEF DEBUG THEN (
+          Printf.printf "choose_label, list\n";
+          dump_label_list label_list
+        ) ENDIF;
         mark_equiv label_cnt label_list;
         let aux lst = List.hd lst in  (* stub *)
         let res_label = aux label_list in
@@ -329,24 +401,41 @@ module Ccl (Item : ItemSig) = struct
 
     (* pass 1 of ccl *)
     let rec pass1 x y label_cnt =
+      IFDEF DEBUG THEN (
+        Printf.printf "pass1, x=%d, y=%d, lcnt=%d, c: %s\n"
+          x y label_cnt (Item.to_string plate.(y).(x));
+        dump_labels w h (Some labels)
+      ) ENDIF;
+      let next_label_cnt =
+        if is_fg_cell plate x y cell
+        then match adj_fg_cells plate x y cell with
+          | [] ->                         (* new label *)
+            labels.(y).(x) <- Label label_cnt;
+            label_cnt + 1
+          | list ->                       (* existing labels *)
+            let adj_label = choose_label label_cnt list in
+            labels.(y).(x) <- adj_label;
+            label_cnt
+        else
+          (* skip background cell *)
+          label_cnt
+      in
       match next_coord x y with
-        | Coord_wrong -> label_cnt      (* pass 1 done *)
+        | Coord_wrong ->
+          next_label_cnt    (* pass 1 done *)
         | Coord_ok (x2, y2) ->
-          match adj_fg_cells plate x y cell with
-            | [] ->                     (* new label *)
-              labels.(y).(x) <- Label label_cnt;
-              pass1 x2 y2 (label_cnt + 1)
-            | list ->                   (* existing labels *)
-              let adj_label = choose_label label_cnt list in
-              labels.(y).(x) <- adj_label;
-              pass1 x2 y2 label_cnt
+          pass1 x2 y2 next_label_cnt
     in
     let label_cnt = pass1 0 0 0 in
-    dump_all ~labels:(Some labels) ~classes:(Some classes)
-      ~flags:(Some single_flags) ~cell:(Some cell)
-      ~cnt:(Some label_cnt) w h;
+    IFDEF DEBUG THEN (
+      Printf.printf "pass1 done\n";
+      dump_all ~labels:(Some labels) ~classes:(Some classes)
+        ~flags:(Some single_flags) ~cell:(Some cell)
+        ~cnt:(Some label_cnt) w h;
+      Printf.printf "pass1 dump done\n"
+    ) ENDIF;
     let pass2 =
-      let res = Array.make_matrix w h None in
+      let res = Array.make_matrix h w None in
       for y = 0 to h-1 do
         for x = 0 to w-1 do
           match labels.(y).(x) with
@@ -358,7 +447,11 @@ module Ccl (Item : ItemSig) = struct
       res
     in
     let res = pass2 in
-    dump_one_ccl w h res;
+    IFDEF DEBUG THEN (
+      Printf.printf "pass2 done\n";
+      dump_one_ccl w h res;
+      Printf.printf "pass2 dump done\n"
+    ) ENDIF;
     res
 
   (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
