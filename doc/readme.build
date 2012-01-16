@@ -2,5 +2,4 @@ possible variants
 1
   make
 2
-  not completely ready
-  ocamlbuild -lib unix -pp "camlp4o Camlp4MacroParser.cmo -D DEBUG" rpl.byte
+  ocamlbuild -lflag -g -cflag -g -I ccl -lib unix -pp "camlp4o Camlp4MacroParser.cmo -D DEBUG" rpl.byte
