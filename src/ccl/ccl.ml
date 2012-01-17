@@ -32,6 +32,7 @@ module type ItemSig = sig
   val keys              : c_cnt -> c_key list
 end
 (* ---------------------------------------------------------------------- *)
+(* base module has 6-connectivity *)
 module Ccl (Item : ItemSig) = struct
 
   exception Row_length_mismatch
@@ -219,22 +220,27 @@ module Ccl (Item : ItemSig) = struct
     else Nocell
 
   (* returns cells and coordinates *)
-  let up_cells plate x y =
+  let up_cells conn_ways plate x y =
     match prev_row plate y with
       | Norow -> []
+      | Row row when conn_ways = 4 ->
+        [(cur_cell row x, x, y-1)]
+      | Row row when conn_ways = 8 ->
+        [prev_cell row x, x-1, y-1;
+         cur_cell row x, x, y-1;
+         next_cell row x, x+1, y-1]
       | Row row ->
         if even y
         then
           (* x-1; x *)
-          [prev_cell row x, x-1, y-1; cur_cell row x, x, y-1] (* FIXME:
-                                                                 y or y-1 *)
+          [prev_cell row x, x-1, y-1; cur_cell row x, x, y-1]
         else
           (* x; x+1 *)
           [cur_cell row x, x, y-1; next_cell row x, x+1, y-1]
 
-  let adj_cells plate x y =
+  let adj_cells conn_ways plate x y =
     let prev = prev_cell plate.(y) x, x-1, y in
-    let up = up_cells plate x y in
+    let up = up_cells conn_ways plate x y in
     IFDEF DEBUG THEN (
       Printf.printf "adj: %d, %d\nprev: " x y;
       dump_cell2 prev;
@@ -255,8 +261,8 @@ module Ccl (Item : ItemSig) = struct
     List.map unpack filled
 
   (* for the given cell get adjacent cells with the same color *)
-  let adj_fg_cells plate x y cell =
-    let all = adj_cells plate x y in
+  let adj_fg_cells conn_ways plate x y cell =
+    let all = adj_cells conn_ways plate x y in
     let f (c, cx, cy) =
       let res = Item.cmp cell c in
       IFDEF DEBUG THEN (
@@ -270,7 +276,7 @@ module Ccl (Item : ItemSig) = struct
 
   (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
   (* ccl for one particular cell (color) *)
-  let labeling cell plate w h =
+  let labeling cell conn_ways plate w h =
     let labels = Array.make_matrix h w Empty in
     let classes = Array.init (w*h) (fun i -> i) in
     let single_flags = Array.make (w*h) true in
@@ -402,7 +408,7 @@ module Ccl (Item : ItemSig) = struct
     in
 
     (* pass 1 of ccl *)
-    let rec pass1 x y label_cnt =
+    let rec pass1 conn_ways x y label_cnt =
       IFDEF DEBUG THEN (
         Printf.printf "pass1, x=%d, y=%d, lcnt=%d, c: %s\n"
           x y label_cnt (Item.to_string plate.(y).(x));
@@ -410,7 +416,7 @@ module Ccl (Item : ItemSig) = struct
       ) ENDIF;
       let next_label_cnt =
         if is_fg_cell plate x y cell
-        then match adj_fg_cells plate x y cell with
+        then match adj_fg_cells conn_ways plate x y cell with
           | [] ->                         (* new label *)
             labels.(y).(x) <- Label label_cnt;
             label_cnt + 1
@@ -426,9 +432,9 @@ module Ccl (Item : ItemSig) = struct
         | Coord_wrong ->
           next_label_cnt    (* pass 1 done *)
         | Coord_ok (x2, y2) ->
-          pass1 x2 y2 next_label_cnt
+          pass1 conn_ways x2 y2 next_label_cnt
     in
-    let label_cnt = pass1 0 0 0 in
+    let label_cnt = pass1 conn_ways 0 0 0 in
     IFDEF DEBUG THEN (
       Printf.printf "pass1 done\n";
       dump_all ~labels:(Some labels) ~classes:(Some classes)
@@ -459,8 +465,15 @@ module Ccl (Item : ItemSig) = struct
   (* - - - labeling - - - - - - - - - - - - - - - - - - - - - -*)
 
   (* do a connected component labeling *)
-    let ccl avail_cells w h list =
-      let plate = init_ccl_matrix w h list in
-      let f cell = labeling cell plate w h in
-      List.map f avail_cells
+  let ccl avail_cells conn_ways w h list =
+    let plate = init_ccl_matrix w h list in
+    let f cell = labeling cell conn_ways plate w h in
+    List.map f avail_cells
+   
+  let ccl4 avail_cells w h list =
+    ccl avail_cells 4 w h list
+  let ccl6 avail_cells w h list =
+    ccl avail_cells 6 w h list
+  let ccl8 avail_cells w h list =
+    ccl avail_cells 8 w h list
 end
