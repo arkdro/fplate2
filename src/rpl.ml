@@ -17,7 +17,7 @@ let get_pars ifile ofile wr hr pszr tr sr ct =
     ("-h", Set_int hr, "height");
     ("-psz", Set_int pszr, "point size");
     ("-sr", Set_int sr, "spread ratio (0..100)");
-    ("-ct", Set_int ct, "ccl test level (0..2)");
+    ("-ct", Set_int ct, "ccl type - 4, 6 (default), 8");
     ("-t", Set tr, "test loop with given w, h, psz")
   ] in
   let _ = parse pars (fun x -> ()) usage_text in
@@ -42,15 +42,15 @@ let main () =
   let wr = ref 3 in
   let hr = ref 3 in
   let test = ref false in
-  let ccl_test = ref 0 in
-  get_pars ifile ofile wr hr pszr test s_ratio ccl_test;
+  let ccl_type = ref 0 in
+  get_pars ifile ofile wr hr pszr test s_ratio ccl_type;
   let _ = Rinit.r_init in
-  Printf.printf "w=%d, h=%d, psz=%d, test=%b, sratio=%d, ccl test=%d\n"
-    !wr !hr !pszr !test !s_ratio !ccl_test;
+  Printf.printf "w=%d, h=%d, psz=%d, test=%b, sratio=%d, ccl type=%d\n"
+    !wr !hr !pszr !test !s_ratio !ccl_type;
   if !test = true then
     Plate_test.main !wr !hr !pszr !s_ratio
-  else if !ccl_test > 0 then
-    Ccl_test.main !wr !hr !pszr !s_ratio !ccl_test
+  else if !ccl_type > 0 then
+    Ccl_test.main !wr !hr !pszr !s_ratio !ccl_type
   else
     (* let res = P2.gen point_size width height in *)
     let res = P1.gen !pszr !wr !hr !s_ratio in
