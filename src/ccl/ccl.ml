@@ -456,7 +456,7 @@ module Ccl (Item : ItemSig) = struct
     in
     let res = pass2 in
     IFDEF DEBUG THEN (
-      Printf.printf "pass2 done\n";
+      Printf.printf "pass2 done, cell: %s\n" (Item.to_string cell);
       dump_one_ccl w h res;
       Printf.printf "pass2 dump done\n"
     ) ENDIF;
