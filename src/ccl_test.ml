@@ -13,7 +13,7 @@ end = struct
   end = struct
     let loop data psz w h ccl_type =
       let points = Point.all psz in
-      let res_ccl_list = match ccl_type with
+      let _res_ccl_list = match ccl_type with
         | 4 ->
           C1.ccl4 points w h data
         | 8 ->
@@ -21,9 +21,10 @@ end = struct
         | _ ->
           C1.ccl6 points w h data
       in
-      Printf.printf "ccl_test, loop, ccl result:\n";
-      let f ccl_item = C1.dump_one_ccl w h ccl_item in
-      List.iter f res_ccl_list
+      (* Printf.printf "ccl_test, loop, ccl result:\n"; *)
+      (* let f ccl_item = C1.dump_one_ccl w h ccl_item in *)
+      (* List.iter f res_ccl_list; *)
+      ()
   end
 (* ---------------------------------------------------------------------- *)
   let main width height point_size spread_ratio ccl_type =
