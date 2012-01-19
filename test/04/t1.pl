@@ -67,7 +67,12 @@ for my $cell (sort {$a<=>$b} keys %$src_res){
 	my $cur_src = make_src_data($src_data, $cell);
 	my $cur_src_p = pdl(@$cur_src);
 	my $res_cc8 = cc8compt($cur_src_p);
-	if(compare($res_cc8, $src_res->{$cell})){
+	my $src_p = pdl(@{$src_res->{$cell}});
+	print "cc8:\n" . $res_cc8 . "\n" if $verbose > 4;
+	print "src:\n" . $src_p   . "\n" if $verbose > 4;
+	my @cc8_list = $res_cc8->list;
+	my @src_list = $src_p->list;
+	if(compare(\@cc8_list, \@src_list)){
 		print "matched data\n" if $verbose > 2;
 	}else{
 		print "not matched data\n" if $verbose > 2;
@@ -91,23 +96,18 @@ return \@res;
 }
 
 sub compare {
-my($cc8, $src) = @_;
-my @cc8_list = $cc8->list;
-my $src_p = pdl(@$src);
-my @src_list = $src_p->list;
-print "cc8:\n" . $cc8 . "\n" if $verbose > 4;
-print "src:\n" . $src_p . "\n" if $verbose > 4;
-return if @cc8_list != @src_list; # compare length only
+my($cc8_list, $src_list) = @_;
+return if @$cc8_list != @$src_list; # compare length only
 my(@checked_c, @checked_s);
-for(my $i = 0; $i < @cc8_list && $i < @src_list; $i++){
+for(my $i = 0; $i < @$cc8_list && $i < @$src_list; $i++){
 	print "i=$i\n" if $verbose > 5;
-	my $label_c = $cc8_list[$i];
-	my $label_s = $src_list[$i];
+	my $label_c = $cc8_list->[$i];
+	my $label_s = $src_list->[$i];
 	print "label c: $label_c\n" if $verbose > 5;
 	print "label s: $label_s\n" if $verbose > 5;
 	next if $checked_c[$label_c] && $checked_s[$label_s];
-	my $cell_c = fetch_cells(\@cc8_list, $label_c);
-	my $cell_s = fetch_cells(\@src_list, $label_s);
+	my $cell_c = fetch_cells($cc8_list, $label_c);
+	my $cell_s = fetch_cells($src_list, $label_s);
 	print "cell_c:\n" . Dumper($cell_c) . "\n" if $verbose > 6;
 	print "cell_s:\n" . Dumper($cell_s) . "\n" if $verbose > 6;
 	return unless Data::Compare::Compare($cell_s, $cell_c);
