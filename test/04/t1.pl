@@ -10,7 +10,7 @@ use Getopt::Long;
 use PDL;
 use PDL::Image2D;
 
-use vars qw($verbose);
+use vars qw($verbose $exit_mm);
 
 exit runall();
 
@@ -18,10 +18,12 @@ sub runall {
 my $infile = '-';
 my $outfile = '-';
 $verbose = 0;
+$exit_mm = 0;
 GetOptions (
-	"infile=s" => \$infile,
-	"outfile=s" => \$outfile,
-	"verbose=i" => \$verbose
+	"i|infile=s" => \$infile,
+	"o|outfile=s" => \$outfile,
+	"e|exit!" => \$exit_mm, # exit on any mismatch. Otherwise process all data
+	"v|verbose=i" => \$verbose
 );
 
 my @data;
@@ -79,6 +81,7 @@ for my $cell (sort {$a<=>$b} keys %$src_res){
 		print "input data:\n"   . $cur_src_p . "\n" if $verbose > 3;
 		print "cc8 result:\n"   . $res_cc8   . "\n" if $verbose > 3;
 		$res = 1;
+		return $res if $exit_mm;
 	}
 }
 return $res;
