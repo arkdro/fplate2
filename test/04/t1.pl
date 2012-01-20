@@ -101,6 +101,8 @@ return \@res;
 sub compare {
 my($cc8_list, $src_list) = @_;
 return if @$cc8_list != @$src_list; # compare length only
+my $ids_c = fetch_cells2($cc8_list);
+my $ids_s = fetch_cells2($src_list);
 my(@checked_c, @checked_s);
 for(my $i = 0; $i < @$cc8_list && $i < @$src_list; $i++){
 	print "i=$i\n" if $verbose > 5;
@@ -109,8 +111,8 @@ for(my $i = 0; $i < @$cc8_list && $i < @$src_list; $i++){
 	print "label c: $label_c\n" if $verbose > 5;
 	print "label s: $label_s\n" if $verbose > 5;
 	next if $checked_c[$label_c] && $checked_s[$label_s];
-	my $cell_c = fetch_cells($cc8_list, $label_c);
-	my $cell_s = fetch_cells($src_list, $label_s);
+	my $cell_c = $ids_c->{$label_c};
+	my $cell_s = $ids_s->{$label_s};
 	print "cell_c:\n" . Dumper($cell_c) . "\n" if $verbose > 6;
 	print "cell_s:\n" . Dumper($cell_s) . "\n" if $verbose > 6;
 	return unless Data::Compare::Compare($cell_s, $cell_c);
@@ -120,11 +122,15 @@ for(my $i = 0; $i < @$cc8_list && $i < @$src_list; $i++){
 return 1;
 }
 
-sub fetch_cells {
-my($list, $label) = @_;
-my @dat;
+# store array indices in a hash with the label as a key
+sub fetch_cells2 {
+my($list) = @_;
+my %dat;
 for(my $i=0; $i < @$list; $i++){
-	push @dat, $i if $list->[$i] == $label;
+	my $label = $list->[$i];
+	my $ids = $dat{$label} || [];
+	push @$ids, $i;
+	$dat{$label} = $ids;
 }
-return \@dat;
+return \%dat;
 }
