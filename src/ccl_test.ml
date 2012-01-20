@@ -9,11 +9,12 @@ module Ccl_test : sig
 end = struct
 (* ---------------------------------------------------------------------- *)
   module Loop_test : sig
-    val loop : Point.t list -> int -> int -> int -> int -> unit
+    val loop : Point.t list -> int -> int -> int -> int ->
+      (Point.t list) * (int option array array list)
   end = struct
     let loop data psz w h ccl_type =
       let points = Point.all psz in
-      let _res_ccl_list = match ccl_type with
+      let res_ccl_list = match ccl_type with
         | 4 ->
           C1.ccl4 points w h data
         | 8 ->
@@ -21,10 +22,7 @@ end = struct
         | _ ->
           C1.ccl6 points w h data
       in
-      (* Printf.printf "ccl_test, loop, ccl result:\n"; *)
-      (* let f ccl_item = C1.dump_one_ccl w h ccl_item in *)
-      (* List.iter f res_ccl_list; *)
-      ()
+      points, res_ccl_list
   end
 (* ---------------------------------------------------------------------- *)
   let main width height point_size spread_ratio ccl_type =
@@ -33,7 +31,17 @@ end = struct
     let data = P1.gen point_size width height spread_ratio in
     Printf.printf "begin data:\n%s\n" (P1.to_string data);
     let data_list = P1.get_data_list data in
-    Loop_test.loop data_list point_size width height ccl_type;
+    let points, res = Loop_test.loop data_list point_size width
+      height ccl_type in
+    Printf.printf "main, ccl result:\n";
+    let list2 = List.combine points res in
+    let f (point, ccl_item) =
+      Printf.printf "main, ccl result, cell: %s\n" (Point.to_string point);
+      Printf.printf "main, ccl result, ccl_item:\n";
+      C1.dump_one_ccl width height ccl_item;
+      Printf.printf "main, ccl result, done\n"
+    in
+    List.iter f list2;
     Printf.printf "main end\n"
 end
 (* ---------------------------------------------------------------------- *)
