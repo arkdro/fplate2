@@ -434,12 +434,12 @@ module Ccl (Item : ItemSig) = struct
         | Coord_ok (x2, y2) ->
           pass1 conn_ways x2 y2 next_label_cnt
     in
-    let label_cnt = pass1 conn_ways 0 0 0 in
+    let _label_cnt = pass1 conn_ways 0 0 0 in
     IFDEF DEBUG THEN (
       Printf.printf "pass1 done\n";
       dump_all ~labels:(Some labels) ~classes:(Some classes)
         ~flags:(Some single_flags) ~cell:(Some cell)
-        ~cnt:(Some label_cnt) w h;
+        ~cnt:(Some _label_cnt) w h;
       Printf.printf "pass1 dump done\n"
     ) ENDIF;
     let pass2 =
