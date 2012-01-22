@@ -44,8 +44,8 @@ module rec Point : PointSig = struct
       iter_target color_target iter_cell color_cell
       ENDIF;
     iter_target > iter_cell && color_target = color_cell
-  let to_string2 point = string_of_int point.color
-  let to_string point =
+  let to_string point = string_of_int point.color
+  let to_string2 point =
     "i=" ^ string_of_int point.iter ^ " " ^
       "c=" ^ string_of_int point.color ^ ""
   let clean p = {p with pushed=false; iter = -1}
