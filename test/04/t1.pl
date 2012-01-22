@@ -8,6 +8,7 @@ use FileHandle;
 use Data::Compare;
 use Data::Dumper;
 use Getopt::Long;
+use lib "/home/user6/util/perl/dist/lib/perl/5.14.2/";
 use PDL;
 use PDL::Image2D;
 
@@ -59,9 +60,9 @@ sub fill_src_data {
 my($text) = @_;
 my @data;
 my @arr = split /[\r\n]+/, $text;
-my @a2 = grep /c=\d/, @arr;
+my @a2 = grep /\d/, @arr;
 for my $str (@a2){
-	my @c = $str =~ /c=(\d+)/g;
+	my @c = $str =~ /(\d+)/g;
 	push @data, \@c;
 }
 return \@data;
@@ -69,7 +70,7 @@ return \@data;
 
 sub fill_one_item {
 my($text, $all_items) = @_;
-return if $text !~ /cell:[^c]+c=(\d+)/;
+return if $text !~ /cell:\s*(\d+)/;
 my $cur_cell = $1;
 my($array) = $text =~ /dump_one_ccl, labels:(.*)main, ccl result, done/s;
 my @arr2 = split /[\r\n]+/, $array;
@@ -110,10 +111,10 @@ for my $cell (sort {$a<=>$b} keys %$src_res){
 	my @cc8_list = $res_cc8->list;
 	my @src_list = $src_p->list;
 	if(compare($fdo, \@cc8_list, \@src_list)){
-		print $fdo "matched data\n" if $verbose > 2;
+		print $fdo "matched data\n" if $verbose > 0;
 		$res = 0;
 	}else{
-		print $fdo "not matched data\n" if $verbose > 2;
+		print $fdo "not matched data\n" if $verbose > 0;
 		print $fdo "input data:\n"   . $cur_src_p . "\n" if $verbose > 3;
 		print $fdo "cc8 result:\n"   . $res_cc8   . "\n" if $verbose > 3;
 		$res = 1;
