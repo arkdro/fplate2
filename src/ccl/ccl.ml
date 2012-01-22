@@ -6,11 +6,12 @@
 (* ---------------------------------------------------------------------- *)
 module type ItemSig = sig
   type t
-  val to_string   : t -> string
   val cmp         : t -> t -> bool
+    IFDEF DEBUG THEN
+  val to_string   : t -> string
+    ENDIF
 end
 (* ---------------------------------------------------------------------- *)
-(* base module has 6-connectivity *)
 module Ccl (Item : ItemSig) = struct
 
   exception Row_length_mismatch
@@ -20,6 +21,7 @@ module Ccl (Item : ItemSig) = struct
   type label = Empty | Label of int
   type coord = Coord_wrong | Coord_ok of int * int
 
+      IFDEF DEBUG THEN
   let dump_last_label = function
     | None -> ()
     | Some cnt -> Printf.printf "label cnt: %d\n" cnt
@@ -119,6 +121,7 @@ module Ccl (Item : ItemSig) = struct
 
   let dump_label_list list =
     Printf.printf "%s\n" (string_of_label_list list)
+      ENDIF
 
   let string_of_one_ccl w h data =
     let pwidth = String.length (string_of_int (w * h)) in
@@ -141,6 +144,7 @@ module Ccl (Item : ItemSig) = struct
     let res = string_of_one_ccl w h data in
     Printf.printf "dump_one_ccl, labels:\n%s\n" res
 
+      IFDEF DEBUG THEN
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
     dump_cell cell;
@@ -148,6 +152,7 @@ module Ccl (Item : ItemSig) = struct
     dump_labels w h labels;
     dump_classes w h classes;
     dump_sflags w h flags
+      ENDIF
 
   (* fill a 2d matrix with data from a flat list *)
   let init_ccl_matrix w h list =
