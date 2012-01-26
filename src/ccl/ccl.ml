@@ -3,6 +3,9 @@
  * "A simple and efficient connected components labeling algorithm"
  * by Luidgi Di Stefano, Andrea Bulgarelli
  *)
+
+open Next_item.Next_item
+
 (* ---------------------------------------------------------------------- *)
 module type ItemSig = sig
   type t
@@ -16,8 +19,6 @@ module Ccl (Item : ItemSig) = struct
 
   exception Row_length_mismatch
   exception Column_length_mismatch
-  type 'a row = Norow | Row of 'a
-  type 'a cell = Nocell | Cell of 'a
   type label = Empty | Label of int
   type coord = Coord_wrong | Coord_ok of int * int
 
@@ -123,7 +124,8 @@ module Ccl (Item : ItemSig) = struct
     Printf.printf "%s\n" (string_of_label_list list)
       ENDIF
 
-  let string_of_one_ccl w h data =
+  let dump_one_ccl w h data = ()
+  let dump_one_ccl2 w h data =
     let pwidth = String.length (string_of_int (w * h)) in
     let str_one_cell = function
       | None ->
@@ -136,13 +138,12 @@ module Ccl (Item : ItemSig) = struct
       let str_list = List.map str_one_cell row_list in
       String.concat " " str_list
     in
-    let rows = Array.to_list data in
-    let rows_str = List.map str_row rows in
-    String.concat "\n" rows_str
-
-  let dump_one_ccl w h data =
-    let res = string_of_one_ccl w h data in
-    Printf.printf "dump_one_ccl, labels:\n%s\n" res
+    Printf.printf "dump_one_ccl, labels:\n";
+    let p_row row =
+      let str = str_row row in
+      Printf.printf "%s\n" str
+    in
+    Array.iter p_row data
 
       IFDEF DEBUG THEN
   let dump_all ?(labels = None) ?(classes = None)
@@ -176,31 +177,6 @@ module Ccl (Item : ItemSig) = struct
     Array.map (fun row -> Array.of_list row) a1
 
   let even x = (x mod 2) = 0
-
-  let prev_row plate y =
-    if y > 0 && y <= Array.length plate
-    then Row plate.(y-1)
-    else Norow
-
-  let next_row plate y =
-    if y >= -1 && y < (Array.length plate) - 1
-    then Row plate.(y+1)
-    else Norow
-
-  let prev_cell row x =
-    if x > 0 && x <= Array.length row
-    then Cell row.(x-1)
-    else Nocell
-
-  let cur_cell row x =
-    if x >= 0 && x < Array.length row
-    then Cell row.(x)
-    else Nocell
-
-  let next_cell row x =
-    if x >= -1 && x < (Array.length row) - 1
-    then Cell row.(x+1)
-    else Nocell
 
   (* returns cells and coordinates *)
   let up_cells conn_ways plate x y =
