@@ -1,4 +1,4 @@
-(* connected component labeling
+(* connected components labeling
  * based on (iciap99lu.pdf)
  * "A simple and efficient connected components labeling algorithm"
  * by Luidgi Di Stefano, Andrea Bulgarelli
