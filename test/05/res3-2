@@ -1,0 +1,98 @@
+w=1000, h=1000, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327856666, d2=1327858006, delta=1340
+w=1000, h=1000, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327858006, d2=1327858329, delta=323
+w=1000, h=1000, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327858329, d2=1327858400, delta=71
+=== end
+w=800, h=800, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327858400, d2=1327858949, delta=549
+w=800, h=800, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327858949, d2=1327859088, delta=139
+w=800, h=800, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859088, d2=1327859125, delta=37
+=== end
+w=700, h=700, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859125, d2=1327859445, delta=320
+w=700, h=700, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859445, d2=1327859530, delta=85
+w=700, h=700, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859530, d2=1327859556, delta=26
+=== end
+w=600, h=600, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859556, d2=1327859727, delta=171
+w=600, h=600, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859727, d2=1327859775, delta=48
+w=600, h=600, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859775, d2=1327859793, delta=18
+=== end
+w=500, h=500, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859793, d2=1327859875, delta=82
+w=500, h=500, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859875, d2=1327859901, delta=26
+w=500, h=500, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859901, d2=1327859912, delta=11
+=== end
+w=400, h=400, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859912, d2=1327859945, delta=33
+w=400, h=400, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859945, d2=1327859958, delta=13
+w=400, h=400, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859958, d2=1327859964, delta=6
+=== end
+w=300, h=300, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859964, d2=1327859975, delta=11
+w=300, h=300, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859975, d2=1327859980, delta=5
+w=300, h=300, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859980, d2=1327859984, delta=4
+=== end
+w=250, h=250, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859984, d2=1327859990, delta=6
+w=250, h=250, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859990, d2=1327859992, delta=2
+w=250, h=250, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859992, d2=1327859994, delta=2
+=== end
+w=200, h=200, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859994, d2=1327859997, delta=3
+w=200, h=200, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859997, d2=1327859998, delta=1
+w=200, h=200, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859998, d2=1327859999, delta=1
+=== end
+w=150, h=150, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327859999, d2=1327860000, delta=1
+w=150, h=150, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860000, d2=1327860001, delta=1
+w=150, h=150, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860001, d2=1327860002, delta=1
+=== end
+w=100, h=100, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860002, d2=1327860002, delta=0
+w=100, h=100, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860002, d2=1327860002, delta=0
+w=100, h=100, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860002, d2=1327860003, delta=1
+=== end
+w=75, h=75, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=75, h=75, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=75, h=75, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+=== end
+w=50, h=50, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=50, h=50, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=50, h=50, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+=== end
+w=25, h=25, psz=2, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=25, h=25, psz=4, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+w=25, h=25, psz=8, test=false, sratio=0, ccl type=8, ccl test=true, loops=20, verbose=0
+--- one_loop end, d1=1327860003, d2=1327860003, delta=0
+=== end
