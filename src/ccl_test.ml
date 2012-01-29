@@ -1,7 +1,9 @@
 (* --- tests for ccl ---------------------------------------------------- *)
+open Domains
 open Point
 open Plate
 open Ccl
+module D1 = Domains (Point)
 module P1 = Plate (Point)
 module C1 = Ccl (Point)
 module Ccl_test : sig
@@ -33,6 +35,11 @@ end = struct
     let data_list = P1.get_data_list data in
     let points, res = Loop_test.loop data_list point_size width
       height ccl_type in
+    IFDEF DOMAIN_DEBUG THEN (
+      let domains = D1.create_domains points res in
+      Printf.printf "main, fused domains:\n";
+      D1.dump_plate domains
+    ) ENDIF;
     Printf.printf "main, ccl result:\n";
     let list2 = List.combine points res in
     let f (point, ccl_item) =
