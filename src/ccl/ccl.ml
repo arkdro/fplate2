@@ -10,7 +10,7 @@ open Next_item.Next_item
 module type ItemSig = sig
   type t
   val cmp         : t -> t -> bool
-    IFDEF DEBUG THEN
+    IFDEF CCL_DUMP_DEBUG THEN
   val to_string   : t -> string
     ENDIF
 end
@@ -22,7 +22,7 @@ module Ccl (Item : ItemSig) = struct
   type label = Empty | Label of int
   type coord = Coord_wrong | Coord_ok of int * int
 
-      IFDEF DEBUG THEN
+      IFDEF CCL_DUMP_DEBUG THEN
   let dump_last_label = function
     | None -> ()
     | Some cnt -> Printf.printf "label cnt: %d\n" cnt
@@ -124,8 +124,8 @@ module Ccl (Item : ItemSig) = struct
     Printf.printf "%s\n" (string_of_label_list list)
       ENDIF
 
-  let dump_one_ccl w h data = ()
-  let dump_one_ccl2 w h data =
+  let dump_one_ccl2 w h data = ()
+  let dump_one_ccl w h data =
     let pwidth = String.length (string_of_int (w * h)) in
     let str_one_cell = function
       | None ->
@@ -145,7 +145,7 @@ module Ccl (Item : ItemSig) = struct
     in
     Array.iter p_row data
 
-      IFDEF DEBUG THEN
+      IFDEF CCL_DUMP_DEBUG THEN
   let dump_all ?(labels = None) ?(classes = None)
       ?(flags = None) ?(cell = None) ?(cnt = None) w h =
     dump_cell cell;
@@ -200,7 +200,7 @@ module Ccl (Item : ItemSig) = struct
   let adj_cells conn_ways plate x y =
     let prev = prev_cell plate.(y) x, x-1, y in
     let up = up_cells conn_ways plate x y in
-    IFDEF DEBUG THEN (
+    IFDEF CCL_ADJ_DEBUG THEN (
       Printf.printf "adj: %d, %d\nprev: " x y;
       dump_cell2 prev;
       Printf.printf "adj, up:\n";
@@ -224,7 +224,7 @@ module Ccl (Item : ItemSig) = struct
     let all = adj_cells conn_ways plate x y in
     let f (c, cx, cy) =
       let res = Item.cmp cell c in
-      IFDEF DEBUG THEN (
+      IFDEF CCL_ADJ_DEBUG THEN (
         Printf.printf
           "adj_fg_cells: %B, x=%d, y=%d\ncurr cell: %s\nbase cell: %s\n"
           res cx cy (Item.to_string c) (Item.to_string cell)
@@ -269,7 +269,7 @@ module Ccl (Item : ItemSig) = struct
     (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *)
     (* mark classes for equality. Input: cnt, [label] *)
     let mark_equiv label_cnt list =
-      IFDEF DEBUG THEN (
+      IFDEF CCL_MEQ_DEBUG THEN (
         Printf.printf "mark_equiv: %d\n" label_cnt;
         Printf.printf "mark_equiv list:\n";
         dump_label_list list;
@@ -291,7 +291,7 @@ module Ccl (Item : ItemSig) = struct
       let merging_classes surv_class martyr =
         let m_idx = unpack_label martyr in
         let m_class = classes.(m_idx) in
-        IFDEF DEBUG THEN (
+        IFDEF CCL_MERG_DEBUG THEN (
           Printf.printf "merging_classes: surv cls: %d, mrt l: %d, mrt c: %d\n"
             surv_class m_idx m_class;
           dump_labels w h (Some labels);
@@ -299,7 +299,7 @@ module Ccl (Item : ItemSig) = struct
         ) ENDIF;
         let rec aux_merg = function
           | cnt when cnt = label_cnt ->
-            IFDEF DEBUG THEN (
+            IFDEF CCL_MERG_DEBUG THEN (
               Printf.printf "merging_classes: surv cls: %d, mrt l: %d, mrt c: %d\n"
                 surv_class m_idx m_class;
               dump_labels w h (Some labels);
@@ -312,7 +312,9 @@ module Ccl (Item : ItemSig) = struct
           | cnt ->
             aux_merg (cnt+1)
         in
-        aux_merg 0
+        if surv_class = m_class         (* gives 10x speed boost *)
+        then ()
+        else aux_merg 0
       in
 
       (* mark martyrs with several items in the class array *)
@@ -336,11 +338,20 @@ module Ccl (Item : ItemSig) = struct
     (* - - - mark_equiv - - - - - - - - - - - - - - - - - - - - -*)
     in
 
+    let make_uniq_label_list list =
+      let uniq_aux acc item =
+        if List.mem item acc
+        then acc
+        else item :: acc
+      in
+      List.fold_left uniq_aux [] list
+    in
+
     (* choose the label from a list, mark classes for equality *)
     let choose_label label_cnt = function
       | (c, cx, cy) :: [] ->
         (
-          IFDEF DEBUG THEN (
+          IFDEF CCL_CLAB_DEBUG THEN (
             Printf.printf "choose_label, one: %d, %d\n" cx cy;
             dump_labels w h (Some labels)
           ) ENDIF;
@@ -350,25 +361,28 @@ module Ccl (Item : ItemSig) = struct
         )
       | list ->
         let f (_c, cx, cy) =
-          IFDEF DEBUG THEN (
+          IFDEF CCL_CLAB_DEBUG THEN (
             Printf.printf "choose_label, f: %d, %d\n" cx cy;
           ) ENDIF;
           labels.(cy).(cx)
         in
         let label_list = List.map f list in
-        IFDEF DEBUG THEN (
+        let uniq_label_list = make_uniq_label_list label_list in
+        IFDEF CCL_CLAB_DEBUG THEN (
           Printf.printf "choose_label, list\n";
-          dump_label_list label_list
+          dump_label_list label_list;
+          Printf.printf "choose_label, uniq list\n";
+          dump_label_list uniq_label_list
         ) ENDIF;
-        mark_equiv label_cnt label_list;
+        mark_equiv label_cnt uniq_label_list;
         let aux lst = List.hd lst in  (* stub *)
-        let res_label = aux label_list in
+        let res_label = aux uniq_label_list in
         res_label
     in
 
     (* pass 1 of ccl *)
     let rec pass1 conn_ways x y label_cnt =
-      IFDEF DEBUG THEN (
+      IFDEF CCL_PASS1_DEBUG THEN (
         Printf.printf "pass1, x=%d, y=%d, lcnt=%d, c: %s\n"
           x y label_cnt (Item.to_string plate.(y).(x));
         dump_labels w h (Some labels)
@@ -394,7 +408,7 @@ module Ccl (Item : ItemSig) = struct
           pass1 conn_ways x2 y2 next_label_cnt
     in
     let _label_cnt = pass1 conn_ways 0 0 0 in
-    IFDEF DEBUG THEN (
+    IFDEF CCL_PASS1_DONE_DEBUG THEN (
       Printf.printf "pass1 done\n";
       dump_all ~labels:(Some labels) ~classes:(Some classes)
         ~flags:(Some single_flags) ~cell:(Some cell)
@@ -414,7 +428,7 @@ module Ccl (Item : ItemSig) = struct
       res
     in
     let res = pass2 in
-    IFDEF DEBUG THEN (
+    IFDEF CCL_PASS2_DEBUG THEN (
       Printf.printf "pass2 done, cell: %s\n" (Item.to_string cell);
       dump_one_ccl w h res;
       Printf.printf "pass2 dump done\n"

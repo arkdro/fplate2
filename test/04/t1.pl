@@ -21,10 +21,12 @@ my $infile = '-';
 my $outfile = '-';
 $verbose = 0;
 $exit_mm = 0;
+my $use_tid = 1;
 GetOptions (
 	"i|infile=s" => \$infile,
 	"o|outfile=s" => \$outfile,
 	"e|exit!" => \$exit_mm, # exit on any mismatch. Otherwise process all data
+	"t|tid!" => \$use_tid,
 	"v|verbose=i" => \$verbose
 );
 
@@ -42,7 +44,11 @@ my $flag = 0;
 my $item = '';
 my $rc = 2; # "no items" at the beginning
 while(my $str = $fdi->getline()) {
-	$flag=1 if($str =~ /^main:/);
+	if($use_tid){
+		$flag=1 if($str =~ /^tid=/);
+	}else{
+		$flag=1 if($str =~ /^main:/);
+	}
 	$item .= $str if $flag;
 	if($str =~ /^main end/ && $flag){
 		$rc = get_one_plate($fdo, $item);
@@ -72,7 +78,7 @@ sub fill_one_item {
 my($text, $all_items) = @_;
 return if $text !~ /cell:\s*(\d+)/;
 my $cur_cell = $1;
-my($array) = $text =~ /dump_one_ccl, labels:(.*)main, ccl result, done/s;
+my($array) = $text =~ /dump_one_ccl, labels:(.*)one_step, ccl result, done/s;
 my @arr2 = split /[\r\n]+/, $array;
 for my $str (@arr2){
 	next unless $str;
@@ -86,19 +92,20 @@ for my $str (@arr2){
 
 sub get_one_plate {
 my($fdo, $item) = @_;
+my($tid) = $item =~ /^tid=(\S+)/m;
 my($psz) = $item =~ /main:\s+\d+,\s+\d+,\s+(\d+)/;
-my($src) = $item =~ /^begin data:(.*?)main, ccl result:/ms;
-my @items = $item =~ /(main, ccl result, cell:.*?main, ccl result, done)/gs;
+my($src) = $item =~ /^begin data:(.*?)one_step, ccl result:/ms;
+my @items = $item =~ /(one_step, ccl result, cell:.*?one_step, ccl result, done)/gs;
 my $src_data = fill_src_data($src);
 my %all_items;
 for my $cur_item (@items){
 	fill_one_item($cur_item, \%all_items);
 }
-return cmp_data($fdo, $src_data, \%all_items);
+return cmp_data($fdo, $src_data, \%all_items, $tid);
 }
 
 sub cmp_data {
-my($fdo, $src_data, $src_res) = @_;
+my($fdo, $src_data, $src_res, $tid) = @_;
 my $res = 3;
 for my $cell (sort {$a<=>$b} keys %$src_res){
 	print $fdo "cell: $cell\n" if $verbose > 2;
@@ -111,10 +118,10 @@ for my $cell (sort {$a<=>$b} keys %$src_res){
 	my @cc8_list = $res_cc8->list;
 	my @src_list = $src_p->list;
 	if(compare($fdo, \@cc8_list, \@src_list)){
-		print $fdo "matched data\n" if $verbose > 0;
+		print $fdo "matched data, $tid\n" if $verbose > 0;
 		$res = 0;
 	}else{
-		print $fdo "not matched data\n" if $verbose > 0;
+		print $fdo "not matched data, $tid\n" if $verbose > 0;
 		print $fdo "input data:\n"   . $cur_src_p . "\n" if $verbose > 3;
 		print $fdo "cc8 result:\n"   . $res_cc8   . "\n" if $verbose > 3;
 		$res = 1;
