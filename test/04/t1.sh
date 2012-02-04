@@ -6,9 +6,11 @@ one_bunch(){
 	local psz=$3
 	tmp="$DATA_DIR/tmp-$w-$h-$psz"
 	res="$DATA_DIR/tmp-$w-$h-$psz.res"
+	id_base="$w:$h:$psz"
 	for i in `seq -w 1 $BATCH`
 	do
-		$RPL -w $w -h $h -psz $psz -ct 8
+		echo "tid=${id_base}:${i}"
+		$RPL -w $w -h $h -psz $psz -ctype 8 -ct -loops 1 -v 1
 	done > "$tmp"
 	$TEST $TEST_PARAMS -i "$tmp" -o "$res"
 	rc=$?
@@ -26,7 +28,7 @@ one_bunch(){
 	rm -f -- "$tmp" "$res"
 }
 
-RPL=./rpl.byte
+RPL=./rpl
 TEST=./t1.pl
 TEST_PARAMS="-e -v 1"
 w0=10
@@ -46,4 +48,7 @@ do
 			one_bunch $w $h $psz
 		done
 	done
+	tmp_file="$DATA_FILE-$w"
+	mv "$DATA_FILE" "$tmp_file"
+	gzip "$tmp_file"
 done
