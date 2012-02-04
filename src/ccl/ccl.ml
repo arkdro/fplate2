@@ -312,7 +312,9 @@ module Ccl (Item : ItemSig) = struct
           | cnt ->
             aux_merg (cnt+1)
         in
-        aux_merg 0
+        if surv_class = m_class         (* gives 10x speed boost *)
+        then ()
+        else aux_merg 0
       in
 
       (* mark martyrs with several items in the class array *)
@@ -336,6 +338,15 @@ module Ccl (Item : ItemSig) = struct
     (* - - - mark_equiv - - - - - - - - - - - - - - - - - - - - -*)
     in
 
+    let make_uniq_label_list list =
+      let uniq_aux acc item =
+        if List.mem item acc
+        then acc
+        else item :: acc
+      in
+      List.fold_left uniq_aux [] list
+    in
+
     (* choose the label from a list, mark classes for equality *)
     let choose_label label_cnt = function
       | (c, cx, cy) :: [] ->
@@ -356,13 +367,16 @@ module Ccl (Item : ItemSig) = struct
           labels.(cy).(cx)
         in
         let label_list = List.map f list in
+        let uniq_label_list = make_uniq_label_list label_list in
         IFDEF DEBUG THEN (
           Printf.printf "choose_label, list\n";
-          dump_label_list label_list
+          dump_label_list label_list;
+          Printf.printf "choose_label, uniq list\n";
+          dump_label_list uniq_label_list
         ) ENDIF;
-        mark_equiv label_cnt label_list;
+        mark_equiv label_cnt uniq_label_list;
         let aux lst = List.hd lst in  (* stub *)
-        let res_label = aux label_list in
+        let res_label = aux uniq_label_list in
         res_label
     in
 
