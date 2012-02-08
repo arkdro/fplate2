@@ -3,9 +3,11 @@ open Domains
 open Point
 open Plate
 open Ccl
+open Ct_ccl
 module D1 = Domains (Point)
 module P1 = Plate (Point)
 module C1 = Ccl (Point)
+module C2 = Ct_ccl (Point)
 module Ccl_test : sig
   val main : int -> int -> int -> int -> int -> int -> int -> unit
 end = struct
