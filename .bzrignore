@@ -12,6 +12,8 @@ TAGS
 *.opt
 *.run
 rpl
+rpl.byte
+rpl.native
 src/p/plate_piqi.ml
 src/p/plate_piqi_ext.ml
 res[0-9]
