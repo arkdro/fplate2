@@ -7,13 +7,17 @@ module type PointSig = sig
   val cmp_iter  : t -> t -> bool
   val to_string : t -> string
   val to_string2 : t -> string
-  val value      : t -> int
   val add_push  : t -> t
   val set_iter: t -> int -> t
   val copy_iter: t -> t -> t
   val add_iter: t -> t
   val clean     : t -> t
   val all       : int -> t list
+
+  (* for ct_ccl *)
+  val value      : t -> int
+  val filler     : int
+  val empty      : int
 
   type c_cnt
   type c_key = t
@@ -50,6 +54,11 @@ module rec Point : PointSig = struct
     "i=" ^ string_of_int point.iter ^ " " ^
       "c=" ^ string_of_int point.color ^ ""
   let value point = point.color
+
+  (* for ct_ccl *)
+  let filler = 0
+  let empty = -2
+
   let clean p = {p with pushed=false; iter = -1}
   let add_push p = {p with pushed=true}
   let set_iter p iter = {p with iter = iter}
