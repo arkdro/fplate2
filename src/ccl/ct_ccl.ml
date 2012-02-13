@@ -86,19 +86,31 @@ module Ct_ccl (Item : ItemSig) = struct
     let (plate, b_up, b_right, b_down, b_left) = data in
     let labels = Array2.fill (Array2.create int c_layout w h) Item.empty in
     let is_bg (x, y) = false in
+    let is_fg (x, y) = false in
     let has_label (x, y) = false in
     let has_mark (x, y) = false in
-    let step_1 = () in
-    let step_2 = () in
-    let step_3 = () in
-    let aux x y =
+    let step_1 x y =
       if (not (has_label (x, y))) && (is_bg (up_coord w h x y))
-      then step_1
-      else if is_bg (down_coord w h x y) && (not (has_mark (down_coord w h x y)))
-      then step_2
-      else step_3
+      then true
+      else false
     in
-    aux 0 0
+    let step_2 x y =
+      if is_bg (down_coord w h x y) && (not (has_mark (down_coord w h x y)))
+      then true
+      else false
+    in
+    let step_3 x y = () in
+    let rec aux = function
+      | None -> ()
+      | Some (x, y) ->
+        let flag_1 = step_1 x y in
+        let flag_2 = step_2 x y in
+        (if flag_1 = false && flag_2 = false
+         then step_3 x y);
+        let next = next_coord w h x y in
+        aux next
+    in
+    aux (Some (0, 0))
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
 
   (* do a connected components labeling *)
