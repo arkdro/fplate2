@@ -63,10 +63,14 @@ module Ct_ccl (Item : ItemSig) = struct
     in
 
     (* extra borders for marking surrounding background pixels *)
-    let up = Array1.fill (Array1.create int c_layout (w+2)) Item.filler in
-    let down = Array1.fill (Array1.create int c_layout (w+2)) Item.filler in
-    let left = Array1.fill (Array1.create int c_layout (h+2)) Item.filler in
-    let right = Array1.fill (Array1.create int c_layout (h+2)) Item.filler in
+    let up = Array1.create int c_layout (w+2) in
+    let _ = Array1.fill up Item.filler in
+    let down = Array1.create int c_layout (w+2) in
+    let _ = Array1.fill down Item.filler in
+    let left = Array1.create int c_layout (h+2) in
+    let _ = Array1.fill left Item.filler in
+    let right = Array1.create int c_layout (h+2) in
+    let _ = Array1.fill right Item.filler in
 
     let a1 = Array2.create int c_layout w h in
     let rec aux0 idx = function
@@ -84,13 +88,33 @@ module Ct_ccl (Item : ItemSig) = struct
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
   let labeling cell conn_ways data w h =
     let (plate, b_up, b_right, b_down, b_left) = data in
-    let labels = Array2.fill (Array2.create int c_layout w h) Item.empty in
-    let is_bg (x, y) = false in
-    let is_fg (x, y) = false in
-    let has_label (x, y) = false in
-    let has_mark (x, y) = false in
+    let labels = Array2.create int c_layout w h in
+    let _ = Array2.fill labels Item.empty in
+    let is_bg = function
+      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
+        plate.{x, y} <> cell
+      | Some _ -> true
+      | None -> true
+    in
+    let is_fg = function
+      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
+        plate.{x, y} = cell
+      | Some _ -> false
+      | None -> false
+    in
+    let has_label = function            (* fg cell *)
+      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
+        labels.{x, y} <> Item.empty
+      | Some (x, y) -> assert false     (* should not happen *)
+      | None -> false
+    in
+    let has_mark = function             (* bg cell *)
+      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h -> false
+      | Some (x, y) -> false
+      | None -> true
+    in
     let step_1 x y =
-      if (not (has_label (x, y))) && (is_bg (up_coord w h x y))
+      if (not (has_label (Some (x, y)))) && (is_bg (up_coord w h x y))
       then true
       else false
     in
@@ -120,7 +144,10 @@ module Ct_ccl (Item : ItemSig) = struct
       let (plate, _b_up, _b_right, _b_down, _b_left) = data in
       dump_ct_ccl plate
     ) ENDIF;
-    let f cell = labeling cell conn_ways data w h in
+    let f cell =
+      let cval = Item.value cell in
+      labeling cval conn_ways data w h
+    in
     List.map f avail_cells
    
   let ccl4 avail_cells w h list =
