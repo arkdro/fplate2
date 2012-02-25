@@ -18,6 +18,7 @@ module type PointSig = sig
   val value      : t -> int
   val filler     : int
   val empty      : int
+  val bg_mark    : int
 
   type c_cnt
   type c_key = t
@@ -58,6 +59,7 @@ module rec Point : PointSig = struct
   (* for ct_ccl *)
   let filler = 0
   let empty = -2
+  let bg_mark = -1
 
   let clean p = {p with pushed=false; iter = -1}
   let add_push p = {p with pushed=true}
