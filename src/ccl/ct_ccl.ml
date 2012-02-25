@@ -12,10 +12,11 @@ open Ct_next_item.Ct_next_item
 (* ---------------------------------------------------------------------- *)
 module type ItemSig = sig
   type t
-  val cmp         : t -> t -> bool
+  (* val cmp         : t -> t -> bool *)
   val value       : t -> int
   val filler      : int
   val empty       : int
+  val bg_mark     : int
     IFDEF CTCCL_DUMP_DEBUG THEN
   val to_string   : t -> string
     ENDIF
@@ -67,9 +68,9 @@ module Ct_ccl (Item : ItemSig) = struct
     let _ = Array1.fill up Item.filler in
     let down = Array1.create int c_layout (w+2) in
     let _ = Array1.fill down Item.filler in
-    let left = Array1.create int c_layout (h+2) in
+    let left = Array1.create int c_layout h in
     let _ = Array1.fill left Item.filler in
-    let right = Array1.create int c_layout (h+2) in
+    let right = Array1.create int c_layout h in
     let _ = Array1.fill right Item.filler in
 
     let a1 = Array2.create int c_layout w h in
@@ -106,35 +107,72 @@ module Ct_ccl (Item : ItemSig) = struct
       | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
         labels.{x, y} <> Item.empty
       | Some (x, y) -> assert false     (* should not happen *)
-      | None -> false
+      | None -> false                   (* borders are behind the plate *)
     in
     let has_mark = function             (* bg cell *)
-      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h -> false
-      | Some (x, y) -> false
-      | None -> true
+      | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
+        labels.{x, y} = Item.bg_mark
+      | Some (x, y) when y < 0 && x >= -1 && x <= w ->
+        b_up.{x+1} = Item.bg_mark       (* b_up begins from -1 *)
+      | Some (x, y) when y >= h && x >= -1 && x <= w ->
+        b_down.{x+1} = Item.bg_mark     (* b_down begins from -1 *)
+      | Some (x, y) when x < 0 && y >= 0 && y < h ->
+        b_left.{y} = Item.bg_mark
+      | Some (x, y) when x >= w && y >= 0 && y < h ->
+        b_right.{y} = Item.bg_mark
+      | _ -> assert false     (* should not happen *)
+      (* | None -> false *)
     in
-    let step_1 x y =
+    let assign_label label x y =
+      labels.{x, y} <- label            (* check for allowed x, y? *)
+    in
+    let trace_external_contour label = () (* stub *)
+    in
+    let trace_internal_contour x y = () (* stub *)
+    in
+    let step_1 label x y =
       if (not (has_label (Some (x, y)))) && (is_bg (up_coord w h x y))
-      then true
-      else false
+      then
+        (
+          assign_label label x y;
+          trace_external_contour label;
+          true, label + 1;
+        )
+      else false, label
+    in
+    let copy_prev_cell_label x y =
+      let px, py = prev_in_line_coor x y in
+      let label = labels.{px, py} in
+      labels.{x, y} <- label
+    in
+    let step_2aux x y =
+      (
+        if labels.{x, y} = 0
+        then copy_prev_cell_label x y
+      );
+      trace_internal_contour x y
     in
     let step_2 x y =
       if is_bg (down_coord w h x y) && (not (has_mark (down_coord w h x y)))
-      then true
+      then
+        (step_2aux x y;
+         true)
       else false
     in
-    let step_3 x y = () in
-    let rec aux = function
+    let step_3 x y =
+      copy_prev_cell_label x y
+    in
+    let rec aux label_0 = function
       | None -> ()
       | Some (x, y) ->
-        let flag_1 = step_1 x y in
+        let flag_1, new_label = step_1 label_0 x y in
         let flag_2 = step_2 x y in
         (if flag_1 = false && flag_2 = false
          then step_3 x y);
         let next = next_coord w h x y in
-        aux next
+        aux new_label next
     in
-    aux (Some (0, 0))
+    aux 1 (Some (0, 0))
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
 
   (* do a connected components labeling *)
