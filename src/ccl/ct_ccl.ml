@@ -126,6 +126,39 @@ module Ct_ccl (Item : ItemSig) = struct
     let assign_label label x y =
       labels.{x, y} <- label            (* check for allowed x, y? *)
     in
+
+    (* given prev and cur coordinates calculate tracer index of prev point *)
+    let coord_to_tracer_index px py x y =
+      let dx = x - px in
+      let dy = y - py in
+      match dx, dy with
+        | -1, -1 -> 1
+        | -1,  0 -> 0
+        | -1,  1 -> 7
+        |  0, -1 -> 2
+        |  0,  1 -> 6
+        |  1, -1 -> 3
+        |  1,  0 -> 4
+        |  1,  1 -> 5
+        |  _ -> assert false
+    in
+
+    (* find initial point for external tracer *)
+    let ext_init_point x y = function
+      | None -> 7
+      | Some (px, py) ->
+        let idx = coord_to_tracer_index px py x y in
+        (idx + 2) mod 8
+    in
+    let ext_tracer x y prev =
+      (* goes clockwise *)
+      let init = ext_init_point x y prev
+      in ()
+    in
+
+    let int_tracer x y = ()             (* stub *)
+    (* goes counter(!!!) clockwise, disregarding algo description *)
+    in
     let trace_external_contour label = () (* stub *)
     in
     let trace_internal_contour x y = () (* stub *)
