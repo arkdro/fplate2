@@ -86,11 +86,33 @@ module Ct_ccl (Item : ItemSig) = struct
     aux0 0 list;
     (a1, up, right, down, left)
 
+    (* delta coordinates and tracer index *)
+    let delta_coord_tracer_index =
+      let dcoor2idx = Hashtbl.create 8 in
+      let idx2dcoor = Hashtbl.create 8 in
+      let dat = [
+        (-1,  0), 0;
+        (-1, -1), 1;
+        (0, -1), 2;
+        (1, -1), 3;
+        (1,  0), 4;
+        (1,  1), 5;
+        (0,  1), 6;
+        (-1,  1), 7
+      ] in
+      List.iter (fun (k, v) -> Hashtbl.add dcoor2idx k v) dat;
+      List.iter (fun (v, k) -> Hashtbl.add idx2dcoor k v) dat;
+      dcoor2idx, idx2dcoor
+
+    let dcoord_to_tracer_index dx dy tab = Hashtbl.find tab (dx, dy)
+    let tracer_index_to_dcoord idx tab = Hashtbl.find tab idx
+
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
   let labeling cell conn_ways data w h =
     let (plate, b_up, b_right, b_down, b_left) = data in
     let labels = Array2.create int c_layout w h in
     let _ = Array2.fill labels Item.empty in
+    let dcoor2idx, idx2dcoor = delta_coord_tracer_index in
     let is_bg = function
       | Some (x, y) when x >= 0 && x < w && y >= 0 && y < h ->
         plate.{x, y} <> cell
@@ -131,29 +153,28 @@ module Ct_ccl (Item : ItemSig) = struct
     let coord_to_tracer_index px py x y =
       let dx = x - px in
       let dy = y - py in
-      match dx, dy with
-        | -1, -1 -> 1
-        | -1,  0 -> 0
-        | -1,  1 -> 7
-        |  0, -1 -> 2
-        |  0,  1 -> 6
-        |  1, -1 -> 3
-        |  1,  0 -> 4
-        |  1,  1 -> 5
-        |  _ -> assert false
+      dcoord_to_tracer_index dx dy dcoor2idx
     in
 
     (* find initial point for external tracer *)
     let ext_init_point x y = function
-      | None -> 7
+      | None -> 7                       (* start of external contour *)
       | Some (px, py) ->
         let idx = coord_to_tracer_index px py x y in
         (idx + 2) mod 8
     in
     let ext_tracer x y prev =
       (* goes clockwise *)
-      let init = ext_init_point x y prev
-      in ()
+      let init = ext_init_point x y prev in
+      let rec aux = function
+        | 8 -> None
+        | add ->
+          let idx = (init + add) mod 8 in
+          let dx, dy = tracer_index_to_dcoord idx idx2dcoor in
+          if is_fg (Some (x+dx, y+dy))
+          then Some (x+dx, y+dy)
+          else aux (add+1)
+      in aux 0
     in
 
     let int_tracer x y = ()             (* stub *)
