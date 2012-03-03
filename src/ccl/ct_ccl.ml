@@ -145,6 +145,9 @@ module Ct_ccl (Item : ItemSig) = struct
       | _ -> assert false     (* should not happen *)
       (* | None -> false *)
     in
+
+    let mark_bg x y = labels.{x, y} <- Item.bg_mark in
+
     let assign_label label x y =
       labels.{x, y} <- label            (* check for allowed x, y? *)
     in
@@ -163,6 +166,9 @@ module Ct_ccl (Item : ItemSig) = struct
         let idx = coord_to_tracer_index px py x y in
         (idx + 2) mod 8
     in
+
+    (* find following foreground point for the given point in
+       external contour *)
     let ext_tracer x y prev =
       (* goes clockwise *)
       let init = ext_init_point x y prev in
@@ -173,14 +179,32 @@ module Ct_ccl (Item : ItemSig) = struct
           let dx, dy = tracer_index_to_dcoord idx idx2dcoor in
           if is_fg (Some (x+dx, y+dy))
           then Some (x+dx, y+dy)
-          else aux (add+1)
+          else (
+            mark_bg (x+dx) (y+dy);
+            aux (add+1)
+          )
       in aux 0
     in
 
     let int_tracer x y = ()             (* stub *)
     (* goes counter(!!!) clockwise, disregarding algo description *)
     in
-    let trace_external_contour label = () (* stub *)
+
+    let trace_external_contour x0 y0 label =
+      let start = Some (x0, y0) in
+      let rec aux (x, y) prev second_point =
+        let cur_point = Some (x, y) in
+        match ext_tracer x y prev with
+          | None -> ()                  (* standalone point *)
+          | Some (x2, y2) as next_point when second_point = None ->
+            aux (x2, y2) cur_point next_point
+          | Some (x2, y2) when prev = start &&
+                            cur_point = second_point ->
+            ()                          (* contour done *)
+          | Some (x2, y2) ->
+            aux (x2, y2) cur_point second_point
+      in aux (x0, y0) None None
+
     in
     let trace_internal_contour x y = () (* stub *)
     in
@@ -189,7 +213,7 @@ module Ct_ccl (Item : ItemSig) = struct
       then
         (
           assign_label label x y;
-          trace_external_contour label;
+          trace_external_contour x y label;
           true, label + 1;
         )
       else false, label
