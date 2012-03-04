@@ -211,24 +211,32 @@ module Ct_ccl (Item : ItemSig) = struct
       common_tracer x y init
     in
 
-    let trace_external_contour x0 y0 label =
+    let common_trace_contour fn_tracer x0 y0 label =
       let start = Some (x0, y0) in
       let rec aux (x, y) prev second_point =
         let cur_point = Some (x, y) in
-        match ext_tracer x y prev with
+        match fn_tracer x y prev with
           | None -> ()                  (* standalone point *)
           | Some (x2, y2) as next_point when second_point = None ->
+            assign_label label x2 y2;
             aux (x2, y2) cur_point next_point
           | Some (x2, y2) when prev = start &&
                             cur_point = second_point ->
             ()                          (* contour done *)
           | Some (x2, y2) ->
+            assign_label label x2 y2;
             aux (x2, y2) cur_point second_point
       in aux (x0, y0) None None
+    in
 
+    let trace_external_contour x y label =
+      common_trace_contour ext_tracer x y label
     in
-    let trace_internal_contour x y = () (* stub *)
+
+    let trace_internal_contour x y label =
+      common_trace_contour int_tracer x y label
     in
+
     let step_1 label x y =
       if (not (has_label (Some (x, y)))) && (is_bg (up_coord w h x y))
       then
@@ -242,14 +250,17 @@ module Ct_ccl (Item : ItemSig) = struct
     let copy_prev_cell_label x y =
       let px, py = prev_in_line_coor x y in
       let label = labels.{px, py} in
-      labels.{x, y} <- label
+      labels.{x, y} <- label;
+      label
     in
+
     let step_2aux x y =
-      (
+      let label =
         if labels.{x, y} = 0
         then copy_prev_cell_label x y
-      );
-      trace_internal_contour x y
+        else labels.{x, y}
+      in
+      trace_internal_contour x y label
     in
     let step_2 x y =
       if is_bg (down_coord w h x y) && (not (has_mark (down_coord w h x y)))
@@ -258,9 +269,12 @@ module Ct_ccl (Item : ItemSig) = struct
          true)
       else false
     in
+
+    (* copy label. Return unit *)
     let step_3 x y =
-      copy_prev_cell_label x y
+      let _ = copy_prev_cell_label x y in ()
     in
+
     let rec aux label_0 = function
       | None -> ()
       | Some (x, y) ->
