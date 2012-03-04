@@ -214,17 +214,16 @@ module Ct_ccl (Item : ItemSig) = struct
     let common_trace_contour fn_tracer x0 y0 label =
       let start = Some (x0, y0) in
       let rec aux (x, y) prev second_point =
+        assign_label label x y;
         let cur_point = Some (x, y) in
         match fn_tracer x y prev with
           | None -> ()                  (* standalone point *)
           | Some (x2, y2) as next_point when second_point = None ->
-            assign_label label x2 y2;
             aux (x2, y2) cur_point next_point
           | Some (x2, y2) when prev = start &&
                             cur_point = second_point ->
             ()                          (* contour done *)
           | Some (x2, y2) ->
-            assign_label label x2 y2;
             aux (x2, y2) cur_point second_point
       in aux (x0, y0) None None
     in
