@@ -159,19 +159,29 @@ module Ct_ccl (Item : ItemSig) = struct
       dcoord_to_tracer_index dx dy dcoor2idx
     in
 
+    (* get tracer index based on prev and cur points *)
+    let tracer_next_index px py x y =
+      let idx = coord_to_tracer_index px py x y in
+      (idx + 2) mod 8
+    in
+
     (* find initial point for external tracer *)
     let ext_init_point x y = function
       | None -> 7                       (* start of external contour *)
       | Some (px, py) ->
-        let idx = coord_to_tracer_index px py x y in
-        (idx + 2) mod 8
+        tracer_next_index px py x y
     in
 
-    (* find following foreground point for the given point in
-       external contour *)
-    let ext_tracer x y prev =
-      (* goes clockwise *)
-      let init = ext_init_point x y prev in
+    (* find initial point for internal tracer *)
+    let int_init_point x y = function
+      | None -> 3                       (* start of internal contour *)
+      | Some (px, py) ->
+        tracer_next_index px py x y
+    in
+
+    (* common part for finding following foreground point for
+       the given point in internal/external contours *)
+    let common_tracer x y init =
       let rec aux = function
         | 8 -> None
         | add ->
@@ -186,8 +196,19 @@ module Ct_ccl (Item : ItemSig) = struct
       in aux 0
     in
 
-    let int_tracer x y = ()             (* stub *)
-    (* goes counter(!!!) clockwise, disregarding algo description *)
+    (* find following foreground point for the given point in
+       external contour *)
+    let ext_tracer x y prev =
+      (* goes clockwise *)
+      let init = ext_init_point x y prev in
+      common_tracer x y init
+    in
+
+    (* find following foreground point for the given point in
+       internal contour *)
+    let int_tracer x y prev =
+      let init = int_init_point x y prev in
+      common_tracer x y init
     in
 
     let trace_external_contour x0 y0 label =
