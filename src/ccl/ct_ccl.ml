@@ -250,16 +250,15 @@ module Ct_ccl (Item : ItemSig) = struct
     let copy_prev_cell_label x y =
       let px, py = prev_in_line_coor x y in
       let label = labels.{px, py} in
-      labels.{x, y} <- label;
-      label
+      labels.{x, y} <- label
     in
 
     let step_2aux x y =
-      let label =
+      (
         if labels.{x, y} = 0
         then copy_prev_cell_label x y
-        else labels.{x, y}
-      in
+      );
+      let label = labels.{x, y} in
       trace_internal_contour x y label
     in
     let step_2 x y =
@@ -272,7 +271,7 @@ module Ct_ccl (Item : ItemSig) = struct
 
     (* copy label. Return unit *)
     let step_3 x y =
-      let _ = copy_prev_cell_label x y in ()
+      copy_prev_cell_label x y
     in
 
     let rec aux label_0 = function
