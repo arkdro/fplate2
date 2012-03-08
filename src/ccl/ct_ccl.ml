@@ -197,11 +197,20 @@ module Ct_ccl (Item : ItemSig) = struct
     (* common part for finding following foreground point for
        the given point in internal/external contours *)
     let common_tracer x y init =
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "common tracer, x=%d, y=%d, init=%d\n" x y init
+      ) ENDIF;
       let rec aux = function
         | 8 -> None
         | add ->
+          IFDEF CTCCL_TRACE_DEBUG THEN (
+            Printf.printf "com tracer, add=%d, %!" add
+          ) ENDIF;
           let idx = (init + add) mod 8 in
           let dx, dy = tracer_index_to_dcoord idx idx2dcoor in
+          IFDEF CTCCL_TRACE_DEBUG THEN (
+            Printf.printf "idx=%d, dx=%d, dy=%d\n" idx dx dy
+          ) ENDIF;
           if is_fg (Some (x+dx, y+dy))
           then Some (x+dx, y+dy)
           else (
@@ -215,6 +224,9 @@ module Ct_ccl (Item : ItemSig) = struct
        external contour *)
     let ext_tracer x y prev =
       (* goes clockwise *)
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "ext tracer, x=%d, y=%d\n" x y
+      ) ENDIF;
       let init = ext_init_point x y prev in
       common_tracer x y init
     in
@@ -222,13 +234,23 @@ module Ct_ccl (Item : ItemSig) = struct
     (* find following foreground point for the given point in
        internal contour *)
     let int_tracer x y prev =
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "int tracer, x=%d, y=%d\n" x y
+      ) ENDIF;
       let init = int_init_point x y prev in
       common_tracer x y init
     in
 
     let common_trace_contour fn_tracer x0 y0 label =
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "common trace contour, label=%d, x=%d, y=%d\n"
+          label x0 y0
+      ) ENDIF;
       let start = Some (x0, y0) in
       let rec aux (x, y) prev second_point =
+        IFDEF CTCCL_TRACE_DEBUG THEN (
+          Printf.printf "common trace contour, aux, x=%d, y=%d\n" x y
+        ) ENDIF;
         assign_label label x y;
         let cur_point = Some (x, y) in
         match fn_tracer x y prev with
