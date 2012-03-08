@@ -146,7 +146,22 @@ module Ct_ccl (Item : ItemSig) = struct
       (* | None -> false *)
     in
 
-    let mark_bg x y = labels.{x, y} <- Item.bg_mark in
+    (* mark background cell for later check *)
+    let mark_bg = function
+      (*     labels.{x, y} <- Item.bg_mark  *)
+      | x, y when x >= 0 && x < w && y >= 0 && y < h ->
+        labels.{x, y} <- Item.bg_mark
+      | x, y when y < 0 && x >= -1 && x <= w ->
+        b_up.{x+1} <- Item.bg_mark       (* b_up begins from -1 *)
+      | x, y when y >= h && x >= -1 && x <= w ->
+        b_down.{x+1} <- Item.bg_mark     (* b_down begins from -1 *)
+      | x, y when x < 0 && y >= 0 && y < h ->
+        b_left.{y} <- Item.bg_mark
+      | x, y when x >= w && y >= 0 && y < h ->
+        b_right.{y} <- Item.bg_mark
+      | _ -> assert false     (* should not happen *)
+      (* | None -> false *)
+    in
 
     let assign_label label x y =
       labels.{x, y} <- label            (* check for allowed x, y? *)
@@ -190,7 +205,7 @@ module Ct_ccl (Item : ItemSig) = struct
           if is_fg (Some (x+dx, y+dy))
           then Some (x+dx, y+dy)
           else (
-            mark_bg (x+dx) (y+dy);
+            mark_bg (x+dx, y+dy);
             aux (add+1)
           )
       in aux 0
