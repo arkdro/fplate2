@@ -244,30 +244,53 @@ module Ct_ccl (Item : ItemSig) = struct
     in
 
     let trace_external_contour x y label =
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "ext contour, label=%d, x=%d, y=%d\n" label x y
+      ) ENDIF;
       common_trace_contour ext_tracer x y label
     in
 
     let trace_internal_contour x y label =
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "int contour, label=%d, x=%d, y=%d\n" label x y
+      ) ENDIF;
       common_trace_contour int_tracer x y label
     in
 
     let step_1 label x y =
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "label, step 1, x=%d, y=%d\n" x y
+      ) ENDIF;
       if (not (has_label (Some (x, y)))) && (is_bg (up_coord w h x y))
       then
         (
+          IFDEF CTCCL_XY_DEBUG THEN (
+            Printf.printf "label, step 1, true, label=%d\n" label
+          ) ENDIF;
           assign_label label x y;
           trace_external_contour x y label;
           true, label + 1;
         )
       else false, label
     in
+
+    (* copy label from prev cell in the line to curr cell *)
     let copy_prev_cell_label x y =
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "copy prev label, x=%d, y=%d\n" x y
+      ) ENDIF;
       let px, py = prev_in_line_coor x y in
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "px=%d, py=%d\n" px py
+      ) ENDIF;
       let label = labels.{px, py} in
       labels.{x, y} <- label
     in
 
     let step_2aux x y =
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "label, step 2aux, x=%d, y=%d\n" x y
+      ) ENDIF;
       (
         if labels.{x, y} = 0
         then copy_prev_cell_label x y
@@ -276,6 +299,9 @@ module Ct_ccl (Item : ItemSig) = struct
       trace_internal_contour x y label
     in
     let step_2 x y =
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "label, step 2, x=%d, y=%d\n" x y
+      ) ENDIF;
       if is_bg (down_coord w h x y) && (not (has_mark (down_coord w h x y)))
       then
         (step_2aux x y;
@@ -285,18 +311,29 @@ module Ct_ccl (Item : ItemSig) = struct
 
     (* copy label. Return unit *)
     let step_3 x y =
+      IFDEF CTCCL_XY_DEBUG THEN (
+        Printf.printf "label, step 3, x=%d, y=%d\n" x y
+      ) ENDIF;
       copy_prev_cell_label x y
     in
 
     let rec aux label_0 = function
       | None -> ()
-      | Some (x, y) ->
+      | Some (x, y) as xy when is_fg xy ->
+        IFDEF CTCCL_LAB_DEBUG THEN (
+          Printf.printf "label, aux, cell=%d\n" cell;
+          Printf.printf "label, aux, label_0=%d, x=%d, y=%d\n" label_0 x y;
+          dump_ct_ccl labels
+        ) ENDIF;
         let flag_1, new_label = step_1 label_0 x y in
         let flag_2 = step_2 x y in
         (if flag_1 = false && flag_2 = false
          then step_3 x y);
         let next = next_coord w h x y in
         aux new_label next
+      | Some (x, y) ->
+        let next = next_coord w h x y in
+        aux label_0 next
     in
     aux 1 (Some (0, 0))
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
