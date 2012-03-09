@@ -126,14 +126,14 @@ module Ct_ccl (Item : ItemSig) = struct
       let dcoor2idx = Hashtbl.create 8 in
       let idx2dcoor = Hashtbl.create 8 in
       let dat = [
-        (-1,  0), 0;
-        (-1, -1), 1;
-        (0, -1), 2;
-        (1, -1), 3;
-        (1,  0), 4;
-        (1,  1), 5;
-        (0,  1), 6;
-        (-1,  1), 7
+        ( 1,   0), 0;
+        ( 1,   1), 1;
+        ( 0,   1), 2;
+        (-1,   1), 3;
+        (-1,   0), 4;
+        (-1,  -1), 5;
+        ( 0,  -1), 6;
+        ( 1,  -1), 7
       ] in
       List.iter (fun (k, v) -> Hashtbl.add dcoor2idx k v) dat;
       List.iter (fun (v, k) -> Hashtbl.add idx2dcoor k v) dat;
@@ -202,16 +202,27 @@ module Ct_ccl (Item : ItemSig) = struct
       labels.{x, y} <- label            (* check for allowed x, y? *)
     in
 
-    (* given prev and cur coordinates calculate tracer index of prev point *)
+    (* given prev and cur coordinates calculate tracer index of prev
+       point. Negation here is because we need index for prev point
+       and index array contains delta and index for next point
+    *)
     let coord_to_tracer_index px py x y =
-      let dx = x - px in
-      let dy = y - py in
+      let dx = -(x - px) in
+      let dy = -(y - py) in
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf
+          "coord_to_tracer_index, px=%d, py=%d, x=%d, y=%d, dx=%d, dy=%d\n"
+          px py x y dx dy
+      ) ENDIF;
       dcoord_to_tracer_index dx dy dcoor2idx
     in
 
     (* get tracer index based on prev and cur points *)
     let tracer_next_index px py x y =
       let idx = coord_to_tracer_index px py x y in
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf "tracer_next_index, idx=%d\n" idx
+      ) ENDIF;
       (idx + 2) mod 8
     in
 
