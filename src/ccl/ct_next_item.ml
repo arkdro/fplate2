@@ -1,9 +1,9 @@
 module Ct_next_item = struct
   let up_coord w h x y =
-    (x, y-1)
+    Some (x, y-1)
 
   let down_coord w h x y =
-    (x, y+1)
+    Some (x, y+1)
 
   let next_coord w h x y =
     if x+1 < w
