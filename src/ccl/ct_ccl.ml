@@ -73,6 +73,18 @@ module Ct_ccl (Item : ItemSig) = struct
     done;
     dump2_row down
 
+  let str_pt = function
+    | None ->
+      Printf.sprintf "None"
+    | Some (x, y) ->
+      Printf.sprintf "x=%d, y=%d" x y
+
+  let str_pts list =
+    let l2 = List.map str_pt list in
+    String.concat "\n" l2
+
+  let dump_pts list =    
+    Printf.printf "points:\n%s\n" (str_pts list)
 
   (* fill a 2d matrix with data from a flat list. Return matrix and
      extra border vectors *)
@@ -207,6 +219,10 @@ module Ct_ccl (Item : ItemSig) = struct
     let ext_init_point x y = function
       | None -> 7                       (* start of external contour *)
       | Some (px, py) ->
+        IFDEF CTCCL_TRACE_DEBUG THEN (
+          Printf.printf "ext_init_point, px=%d, py=%d, x=%d, y=%d\n"
+            px py x y
+        ) ENDIF;
         tracer_next_index px py x y
     in
 
@@ -214,6 +230,10 @@ module Ct_ccl (Item : ItemSig) = struct
     let int_init_point x y = function
       | None -> 3                       (* start of internal contour *)
       | Some (px, py) ->
+        IFDEF CTCCL_TRACE_DEBUG THEN (
+          Printf.printf "int_init_point, px=%d, py=%d, x=%d, y=%d\n"
+            px py x y
+        ) ENDIF;
         tracer_next_index px py x y
     in
 
