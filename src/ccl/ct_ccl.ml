@@ -398,7 +398,7 @@ module Ct_ccl (Item : ItemSig) = struct
         Printf.printf "label, step 2aux, x=%d, y=%d\n" x y
       ) ENDIF;
       (
-        if labels.{x, y} = 0
+        if labels.{x, y} = Item.empty
         then copy_prev_cell_label x y
       );
       let label = labels.{x, y} in
