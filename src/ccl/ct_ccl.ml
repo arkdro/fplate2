@@ -122,25 +122,25 @@ module Ct_ccl (Item : ItemSig) = struct
     (a1, t_up, t_right, t_down, t_left)
 
     (* delta coordinates and tracer index *)
-    let delta_coord_tracer_index =
-      let dcoor2idx = Hashtbl.create 8 in
-      let idx2dcoor = Hashtbl.create 8 in
-      let dat = [
-        ( 1,   0), 0;
-        ( 1,   1), 1;
-        ( 0,   1), 2;
-        (-1,   1), 3;
-        (-1,   0), 4;
-        (-1,  -1), 5;
-        ( 0,  -1), 6;
-        ( 1,  -1), 7
-      ] in
-      List.iter (fun (k, v) -> Hashtbl.add dcoor2idx k v) dat;
-      List.iter (fun (v, k) -> Hashtbl.add idx2dcoor k v) dat;
-      dcoor2idx, idx2dcoor
+  let delta_coord_tracer_index =
+    let dcoor2idx = Hashtbl.create 8 in
+    let idx2dcoor = Hashtbl.create 8 in
+    let dat = [
+      ( 1,   0), 0;
+      ( 1,   1), 1;
+      ( 0,   1), 2;
+      (-1,   1), 3;
+      (-1,   0), 4;
+      (-1,  -1), 5;
+      ( 0,  -1), 6;
+      ( 1,  -1), 7
+    ] in
+    List.iter (fun (k, v) -> Hashtbl.add dcoor2idx k v) dat;
+    List.iter (fun (v, k) -> Hashtbl.add idx2dcoor k v) dat;
+    dcoor2idx, idx2dcoor
 
-    let dcoord_to_tracer_index dx dy tab = Hashtbl.find tab (dx, dy)
-    let tracer_index_to_dcoord idx tab = Hashtbl.find tab idx
+  let dcoord_to_tracer_index dx dy tab = Hashtbl.find tab (dx, dy)
+  let tracer_index_to_dcoord idx tab = Hashtbl.find tab idx
 
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
   let labeling cell conn_ways data w h =
