@@ -199,6 +199,9 @@ module Ct_ccl (Item : ItemSig) = struct
     in
 
     let assign_label label x y =
+      IFDEF CTCCL_LAB_DEBUG THEN (
+        Printf.printf "assign_label, label=%d, x=%d, y=%d\n" label x y
+      ) ENDIF;
       labels.{x, y} <- label            (* check for allowed x, y? *)
     in
 
@@ -337,7 +340,13 @@ module Ct_ccl (Item : ItemSig) = struct
               Printf.printf "x=%d, y=%d, x2=%d, y2=%d\n" x y x2 y2
             ) ENDIF;
             aux (x2, y2) cur_point second_point true
-      in aux (x0, y0) None None false
+      in aux (x0, y0) None None false;
+      IFDEF CTCCL_TRACE_DEBUG THEN (
+        Printf.printf
+          "common trace contour, done, label=%d, x0=%d, y0=%d\n"
+          label x0 y0;
+        dump2_ct_ccl labels b_up b_down b_left b_right
+      ) ENDIF;
     in
 
     let trace_external_contour x y label =
