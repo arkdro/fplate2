@@ -439,13 +439,22 @@ module Ct_ccl (Item : ItemSig) = struct
   (* do a connected components labeling *)
   let ccl avail_cells conn_ways w h list =
     let data = init_ccl_matrix w h list in
+    let (plate, _b_up, _b_right, _b_down, _b_left) = data in
     IFDEF CTCCL_DUMP_DEBUG THEN (
-      let (plate, _b_up, _b_right, _b_down, _b_left) = data in
       dump2_ct_ccl plate _b_up _b_down _b_left _b_right
     ) ENDIF;
     let f cell =
       let cval = Item.value cell in
-      labeling cval conn_ways data w h
+      let t_up = Array1.create int c_layout (w+2) in
+      let t_down = Array1.create int c_layout (w+2) in
+      let t_left = Array1.create int c_layout h in
+      let t_right = Array1.create int c_layout h in
+      Array1.blit _b_up t_up;
+      Array1.blit _b_down t_down;
+      Array1.blit _b_left t_left;
+      Array1.blit _b_right t_right;
+      let t_data = (plate, t_up, t_right, t_down, t_left) in
+      labeling cval conn_ways t_data w h
     in
     List.map f avail_cells
    
