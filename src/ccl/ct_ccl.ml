@@ -51,6 +51,29 @@ module Ct_ccl (Item : ItemSig) = struct
   let dump_ct_ccl a =
     Printf.printf "dump_ct_ccl:\n%s\n" (ct_ccl_to_string a)
 
+  (* dump ct_ccl 2d array and 4 border 1d arrays *)
+  let dump2_ct_ccl data up down left right =
+    let dump2_row row =
+      let w = Array1.dim row in
+      for x = 0 to w-1 do
+        Printf.printf "%2d " row.{x};
+      done;
+      Printf.printf "\n"
+    in
+    let w = Array2.dim1 data in
+    let h = Array2.dim2 data in
+    Printf.printf "dump2_ct_ccl, w=%d, h=%d:\n" w h;
+    dump2_row up;
+    for y = 0 to h-1 do
+      Printf.printf "%2d " left.{y};
+      for x = 0 to w-1 do
+        Printf.printf "%2d " data.{x, y};
+      done;
+      Printf.printf "%2d\n" right.{y};
+    done;
+    dump2_row down
+
+
   (* fill a 2d matrix with data from a flat list. Return matrix and
      extra border vectors *)
   let init_ccl_matrix w h list =
@@ -345,7 +368,7 @@ module Ct_ccl (Item : ItemSig) = struct
         IFDEF CTCCL_LAB_DEBUG THEN (
           Printf.printf "label, aux, cell=%d\n" cell;
           Printf.printf "label, aux, label_0=%d, x=%d, y=%d\n" label_0 x y;
-          dump_ct_ccl labels
+          dump2_ct_ccl labels b_up b_down b_left b_right
         ) ENDIF;
         let flag_1, new_label = step_1 label_0 x y in
         let flag_2 = step_2 x y in
@@ -365,7 +388,7 @@ module Ct_ccl (Item : ItemSig) = struct
     let data = init_ccl_matrix w h list in
     IFDEF CTCCL_DUMP_DEBUG THEN (
       let (plate, _b_up, _b_right, _b_down, _b_left) = data in
-      dump_ct_ccl plate
+      dump2_ct_ccl plate _b_up _b_down _b_left _b_right
     ) ENDIF;
     let f cell =
       let cval = Item.value cell in
