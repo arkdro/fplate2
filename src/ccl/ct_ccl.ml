@@ -99,14 +99,14 @@ module Ct_ccl (Item : ItemSig) = struct
     in
 
     (* extra borders for marking surrounding background pixels *)
-    let up = Array1.create int c_layout (w+2) in
-    let _ = Array1.fill up Item.filler in
-    let down = Array1.create int c_layout (w+2) in
-    let _ = Array1.fill down Item.filler in
-    let left = Array1.create int c_layout h in
-    let _ = Array1.fill left Item.filler in
-    let right = Array1.create int c_layout h in
-    let _ = Array1.fill right Item.filler in
+    let t_up = Array1.create int c_layout (w+2) in
+    let _ = Array1.fill t_up Item.filler in
+    let t_down = Array1.create int c_layout (w+2) in
+    let _ = Array1.fill t_down Item.filler in
+    let t_left = Array1.create int c_layout h in
+    let _ = Array1.fill t_left Item.filler in
+    let t_right = Array1.create int c_layout h in
+    let _ = Array1.fill t_right Item.filler in
 
     let a1 = Array2.create int c_layout w h in
     let rec aux0 idx = function
@@ -119,7 +119,7 @@ module Ct_ccl (Item : ItemSig) = struct
       | [] -> ()
     in
     aux0 0 list;
-    (a1, up, right, down, left)
+    (a1, t_up, t_right, t_down, t_left)
 
     (* delta coordinates and tracer index *)
     let delta_coord_tracer_index =
