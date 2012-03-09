@@ -301,22 +301,43 @@ module Ct_ccl (Item : ItemSig) = struct
           label x0 y0
       ) ENDIF;
       let start = Some (x0, y0) in
-      let rec aux (x, y) prev second_point =
+      let rec aux (x, y) prev second_point leave =
         IFDEF CTCCL_TRACE_DEBUG THEN (
           Printf.printf "common trace contour, aux, x=%d, y=%d\n" x y
         ) ENDIF;
         assign_label label x y;
         let cur_point = Some (x, y) in
         match fn_tracer x y prev with
-          | None -> ()                  (* standalone point *)
+          | None ->
+            IFDEF CTCCL_TRACE_DEBUG THEN (
+              Printf.printf
+                "common trace contour, aux, standalone, x=%d, y=%d\n" x y
+            ) ENDIF;
+            ()                  (* standalone point *)
           | Some (x2, y2) as next_point when second_point = None ->
-            aux (x2, y2) cur_point next_point
+            IFDEF CTCCL_TRACE_DEBUG THEN (
+              Printf.printf
+                "common trace contour, aux, empty second point, ";
+              Printf.printf "x=%d, y=%d, x2=%d, y2=%d\n" x y x2 y2
+            ) ENDIF;
+            aux (x2, y2) cur_point next_point false
           | Some (x2, y2) when prev = start &&
-                            cur_point = second_point ->
+                            cur_point = second_point &&
+                            leave = true ->
+            IFDEF CTCCL_TRACE_DEBUG THEN (
+              Printf.printf
+                "common trace contour, aux, done, x=%d, y=%d, x2=%d, y2=%d\n"
+                x y x2 y2;
+              dump_pts [start; second_point; prev; cur_point]
+            ) ENDIF;
             ()                          (* contour done *)
           | Some (x2, y2) ->
-            aux (x2, y2) cur_point second_point
-      in aux (x0, y0) None None
+            IFDEF CTCCL_TRACE_DEBUG THEN (
+              Printf.printf "common trace contour, aux, default, ";
+              Printf.printf "x=%d, y=%d, x2=%d, y2=%d\n" x y x2 y2
+            ) ENDIF;
+            aux (x2, y2) cur_point second_point true
+      in aux (x0, y0) None None false
     in
 
     let trace_external_contour x y label =
