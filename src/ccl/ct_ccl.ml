@@ -379,7 +379,8 @@ module Ct_ccl (Item : ItemSig) = struct
       IFDEF CTCCL_XY_DEBUG THEN (
         Printf.printf "label, step 3, x=%d, y=%d\n" x y
       ) ENDIF;
-      copy_prev_cell_label x y
+      if not (has_label (Some(x, y)))
+      then copy_prev_cell_label x y
     in
 
     let rec aux label_0 = function
