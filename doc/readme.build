@@ -2,5 +2,8 @@ possible variants
 1
   make
 2
-  #ocamlbuild -lflag -g -cflag -g -I ccl -lib unix -pp "camlp4o Camlp4MacroParser.cmo -D DEBUG" rpl.byte
-  ocamlbuild -lflag -g -cflag -g -cflag -annot -I ccl -lib unix -lib bigarray -pp "camlp4o Camlp4MacroParser.cmo -D CTCCL_DUMP_DEBUG" rpl.byte
+  ocamlbuild -lflag -g -cflag -g -cflag -annot -I ccl -lib unix -lib bigarray -pp "camlp4o Camlp4MacroParser.cmo -D CTCCL_DUMP_DEBUG -D CTCCL_XY_DEBUG -D CTCCL_LAB_DEBUG -D CTCCL_TRACE_DEBUG" rpl.byte
+
+  # for profiling:
+  ocamlbuild -ocamlc ocamlopt -lflag -p -cflag -p -I ccl -lib unix -lib bigarray -pp "camlp4o Camlp4MacroParser.cmo" rpl.native
+
