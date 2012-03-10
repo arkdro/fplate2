@@ -280,7 +280,7 @@ module Ct_ccl (Item : ItemSig) = struct
       IFDEF CTCCL_TRACE_DEBUG THEN (
         Printf.printf "common tracer, x=%d, y=%d, init=%d\n" x y init
       ) ENDIF;
-      let rec aux = function
+      let rec ctr_aux = function
         | 8 -> None
         | add ->
           IFDEF CTCCL_TRACE_DEBUG THEN (
@@ -295,9 +295,9 @@ module Ct_ccl (Item : ItemSig) = struct
           then Some (x+dx, y+dy)
           else (
             mark_bg (x+dx, y+dy);
-            aux (add+1)
+            ctr_aux (add+1)
           )
-      in aux 0
+      in ctr_aux 0
     in
 
     (* find following foreground point for the given point in
@@ -327,7 +327,7 @@ module Ct_ccl (Item : ItemSig) = struct
           label x0 y0
       ) ENDIF;
       let start = Some (x0, y0) in
-      let rec aux (x, y) prev second_point leave =
+      let rec ctc_aux (x, y) prev second_point leave =
         IFDEF CTCCL_TRACE_DEBUG THEN (
           Printf.printf "common trace contour, aux, x=%d, y=%d\n" x y
         ) ENDIF;
@@ -346,7 +346,7 @@ module Ct_ccl (Item : ItemSig) = struct
                 "common trace contour, aux, empty second point, ";
               Printf.printf "x=%d, y=%d, x2=%d, y2=%d\n" x y x2 y2
             ) ENDIF;
-            aux (x2, y2) cur_point next_point false
+            ctc_aux (x2, y2) cur_point next_point false
           | Some (x2, y2) when prev = start &&
                             cur_point = second_point &&
                             leave = true ->
@@ -362,8 +362,8 @@ module Ct_ccl (Item : ItemSig) = struct
               Printf.printf "common trace contour, aux, default, ";
               Printf.printf "x=%d, y=%d, x2=%d, y2=%d\n" x y x2 y2
             ) ENDIF;
-            aux (x2, y2) cur_point second_point true
-      in aux (x0, y0) None None false;
+            ctc_aux (x2, y2) cur_point second_point true
+      in ctc_aux (x0, y0) None None false;
       IFDEF CTCCL_TRACE_DEBUG THEN (
         Printf.printf
           "common trace contour, done, label=%d, x0=%d, y0=%d\n"
@@ -447,7 +447,7 @@ module Ct_ccl (Item : ItemSig) = struct
       then copy_prev_cell_label x y
     in
 
-    let rec aux label_0 = function
+    let rec lab_aux label_0 = function
       | None -> ()
       | Some (x, y) as xy when is_fg xy ->
         IFDEF CTCCL_LAB_DEBUG THEN (
@@ -460,12 +460,12 @@ module Ct_ccl (Item : ItemSig) = struct
         (if flag_1 = false && flag_2 = false
          then step_3 x y);
         let next = next_coord w h x y in
-        aux new_label next
+        lab_aux new_label next
       | Some (x, y) ->
         let next = next_coord w h x y in
-        aux label_0 next
+        lab_aux label_0 next
     in
-    aux 1 (Some (0, 0));
+    lab_aux 1 (Some (0, 0));
     if verbose > 1 then (
       Printf.printf "labeling, ct_ccl result, cell: %d\n%!" cell
     );
