@@ -31,7 +31,7 @@ end = struct
   (* ---------------------------------------------------------------------- *)
   let one_step width height point_size spread_ratio ccl_type verbose =
     if verbose > 0 then (
-      Printf.printf "one_step: %d, %d, %d, %d\n"
+      Printf.printf "one_step: %d, %d, %d, %d\n%!"
         width height point_size ccl_type);
     let data = P1.gen point_size width height spread_ratio in
     if verbose > 2
