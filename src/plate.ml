@@ -392,6 +392,7 @@ module Plate (Item : Item) : sig
   type a
   val gen : int -> int -> int -> int -> p
   val get_data_list : p -> Item.t list
+  val dump_plate : p -> unit
   val to_string : p -> string
   val to_string2: int -> int -> p -> string
   val c_to_string : Item.c_cnt -> string
@@ -435,6 +436,20 @@ end = struct
     done;
     let ystr = String.concat "\n" !ys in
     ystr
+
+  let dump_plate (_, p) =
+    Printf.printf "dump_plate, ";
+    let h = Array.length p in
+    let hwidth = String.length (string_of_int h) in
+    let w = Array.length p.(0) in
+    Printf.printf "w=%d, h=%d:\n" w h;
+    for y = 0 to h-1 do
+      Printf.printf "y=%*d, " hwidth y;
+      for x = 0 to w-1 do
+        Printf.printf "%s " (Item.to_string p.(y).(x))
+      done;
+      Printf.printf "\n"
+    done
 
   let c_to_string map =
     Item.c_to_string map
