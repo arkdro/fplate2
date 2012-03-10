@@ -139,8 +139,31 @@ module Ct_ccl (Item : ItemSig) = struct
     List.iter (fun (v, k) -> Hashtbl.add idx2dcoor k v) dat;
     dcoor2idx, idx2dcoor
 
-  let dcoord_to_tracer_index dx dy tab = Hashtbl.find tab (dx, dy)
-  let tracer_index_to_dcoord idx tab = Hashtbl.find tab idx
+  let dcoord_to_tracer_index0 dx dy tab = Hashtbl.find tab (dx, dy)
+  let dcoord_to_tracer_index dx dy _tab =
+    match dx, dy with
+      | ( 1,   0) -> 0
+      | ( 1,   1) -> 1
+      | ( 0,   1) -> 2
+      | (-1,   1) -> 3
+      | (-1,   0) -> 4
+      | (-1,  -1) -> 5
+      | ( 0,  -1) -> 6
+      | ( 1,  -1) -> 7
+      | _ -> assert false               (* should not happen *)
+
+  let tracer_index_to_dcoord0 idx tab = Hashtbl.find tab idx
+  let tracer_index_to_dcoord idx _tab =
+    match idx with
+      | 0 -> ( 1,   0)
+      | 1 -> ( 1,   1)
+      | 2 -> ( 0,   1)
+      | 3 -> (-1,   1)
+      | 4 -> (-1,   0)
+      | 5 -> (-1,  -1)
+      | 6 -> ( 0,  -1)
+      | 7 -> ( 1,  -1)
+      | _ -> assert false               (* should not happen *)
 
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
   let labeling cell conn_ways data w h verbose =
