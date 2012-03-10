@@ -143,7 +143,7 @@ module Ct_ccl (Item : ItemSig) = struct
   let tracer_index_to_dcoord idx tab = Hashtbl.find tab idx
 
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
-  let labeling cell conn_ways data w h =
+  let labeling cell conn_ways data w h verbose =
     let (plate, b_up, b_right, b_down, b_left) = data in
     let labels = Array2.create int c_layout w h in
     let _ = Array2.fill labels Item.empty in
@@ -442,11 +442,17 @@ module Ct_ccl (Item : ItemSig) = struct
         let next = next_coord w h x y in
         aux label_0 next
     in
-    aux 1 (Some (0, 0))
+    aux 1 (Some (0, 0));
+    if verbose > 0 then (
+      Printf.printf "labeling, ct_ccl result, cell: %d\n" cell;
+      Printf.printf "labeling, ct_ccl result, ct_ccl_item:\n";
+      dump2_ct_ccl labels b_up b_right b_down b_left;
+      Printf.printf "labeling, ct_ccl result, done\n"
+    )
   (* - - - labeling- - - - - - - - - - - - - - - - - - - - - - - - - *)
 
   (* do a connected components labeling *)
-  let ccl avail_cells conn_ways w h list =
+  let ccl avail_cells conn_ways w h list verbose =
     let data = init_ccl_matrix w h list in
     let (plate, _b_up, _b_right, _b_down, _b_left) = data in
     IFDEF CTCCL_DUMP_DEBUG THEN (
@@ -463,14 +469,14 @@ module Ct_ccl (Item : ItemSig) = struct
       Array1.blit _b_left t_left;
       Array1.blit _b_right t_right;
       let t_data = (plate, t_up, t_right, t_down, t_left) in
-      labeling cval conn_ways t_data w h
+      labeling cval conn_ways t_data w h verbose
     in
     List.map f avail_cells
    
-  let ccl4 avail_cells w h list =
-    ccl avail_cells 4 w h list
-  let ccl6 avail_cells w h list =
-    ccl avail_cells 6 w h list
-  let ccl8 avail_cells w h list =
-    ccl avail_cells 8 w h list
+  let ccl4 avail_cells w h list verbose =
+    ccl avail_cells 4 w h list verbose
+  let ccl6 avail_cells w h list verbose =
+    ccl avail_cells 6 w h list verbose
+  let ccl8 avail_cells w h list verbose =
+    ccl avail_cells 8 w h list verbose
 end

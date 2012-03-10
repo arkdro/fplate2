@@ -12,19 +12,19 @@ module Ct_ccl_test : sig
 end = struct
 (* ---------------------------------------------------------------------- *)
   module Loop_test : sig
-    val loop : Point.t list -> int -> int -> int -> int ->
+    val loop : Point.t list -> int -> int -> int -> int -> int ->
       (* (Point.t list) * (int option Bigarray.Array2.t list) *)
       (Point.t list) * (unit list)
   end = struct
-    let loop data psz w h ccl_type =
+    let loop data psz w h ccl_type verbose =
       let points = Point.all psz in
       let res_ccl_list = match ccl_type with
         | 4 ->
-          C1.ccl4 points w h data
+          C1.ccl4 points w h data verbose
         | 8 ->
-          C1.ccl8 points w h data
+          C1.ccl8 points w h data verbose
         | _ ->
-          C1.ccl6 points w h data
+          C1.ccl6 points w h data verbose
       in
       points, res_ccl_list
   end
@@ -38,23 +38,13 @@ end = struct
     then Printf.printf "begin data:\n%s\n" (P1.to_string data);
     let data_list = P1.get_data_list data in
     let points, res = Loop_test.loop data_list point_size width
-      height ccl_type in
+      height ccl_type verbose in
     IFDEF DOMAIN_DEBUG THEN (
       let domains = D1.create_domains points res in
       Printf.printf "one_step, fused domains:\n";
       D1.dump_plate domains
     ) ENDIF;
     if verbose > 0 then (
-      Printf.printf "one_step, ccl result:\n";
-      let list2 = List.combine points res in
-      let f (point, ccl_item) =
-        Printf.printf "one_step, ccl result, cell: %s\n"
-          (Point.to_string point);
-        Printf.printf "one_step, ccl result, ccl_item:\n";
-        (* C1.dump_one_ccl width height ccl_item; *)
-        Printf.printf "one_step, ccl result, done\n"
-      in
-      List.iter f list2;
       Printf.printf "one_step end\n"
     )
   (* ---------------------------------------------------------------------- *)
