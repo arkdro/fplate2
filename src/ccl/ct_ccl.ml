@@ -443,7 +443,7 @@ module Ct_ccl (Item : ItemSig) = struct
         aux label_0 next
     in
     aux 1 (Some (0, 0));
-    if verbose > 0 then (
+    if verbose > 3 then (
       Printf.printf "labeling, ct_ccl result, cell: %d\n" cell;
       Printf.printf "labeling, ct_ccl result, ct_ccl_item:\n";
       dump2_ct_ccl labels b_up b_right b_down b_left;

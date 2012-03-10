@@ -34,8 +34,11 @@ end = struct
       Printf.printf "one_step: %d, %d, %d, %d\n"
         width height point_size ccl_type);
     let data = P1.gen point_size width height spread_ratio in
-    if verbose > 0
-    then Printf.printf "begin data:\n%s\n" (P1.to_string data);
+    if verbose > 2
+    then (
+      Printf.printf "begin data:\n";
+      P1.dump_plate data
+    );
     let data_list = P1.get_data_list data in
     let points, res = Loop_test.loop data_list point_size width
       height ccl_type verbose in
